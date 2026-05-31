@@ -2,6 +2,7 @@ import { requireAuth, getUserProfile } from './auth.js';
 import { isAdminRole } from './roles.js';
 import {
   fetchCatalog,
+  fetchSeatRemainingMap,
   insertCatalog,
   updateCatalog,
   deleteCatalog,
@@ -25,6 +26,7 @@ let catalogCache = [];
 let enrollmentsCache = [];
 let currentUserId = null;
 let isAdmin = false;
+let seatMap = {};
 
 function mapError(error) {
   if (!error) return null;
@@ -38,6 +40,9 @@ function mapError(error) {
   if (/duplicate key|unique constraint/i.test(msg)) {
     return 'This course code and section already exists.';
   }
+  if (/no seats available/i.test(msg)) {
+    return 'No seats left for this course.';
+  }
   return msg;
 }
 
@@ -46,6 +51,7 @@ function getCatalogFields(form) {
     title: form.title,
     code: form.code,
     section: form.section,
+    seat_capacity: form.seat_capacity,
     credits: form.credits,
     instructor: form.instructor,
     is_active: form.is_active,
@@ -62,6 +68,16 @@ function applyValidationErrors(form, errors) {
 
 /* ——— Admin: catalog CRUD ——— */
 
+async function loadSeatMap() {
+  const { data, error } = await fetchSeatRemainingMap();
+  if (error) {
+    showToast(mapError(error), 'error');
+    seatMap = {};
+    return;
+  }
+  seatMap = data || {};
+}
+
 async function loadAdminCatalog() {
   const { data, error } = await fetchCatalog();
   if (error) {
@@ -69,6 +85,7 @@ async function loadAdminCatalog() {
     return;
   }
   catalogCache = data || [];
+  await loadSeatMap();
   renderAdminTable();
   const el = document.getElementById('course-count');
   if (el) el.textContent = String(catalogCache.length);
@@ -87,14 +104,19 @@ function renderAdminTable() {
   if (empty) empty.hidden = true;
 
   tbody.innerHTML = catalogCache
-    .map(
-      (c) => `
+    .map((c) => {
+      const seats = seatMap[c.id] || { remaining: 0, enrolled: 0 };
+      const cap = c.seat_capacity ?? 30;
+      return `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
       <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title)}</td>
       <td>${c.credits}</td>
       <td>${escapeHtml(c.instructor)}</td>
+      <td>${cap}</td>
+      <td>${seats.enrolled}</td>
+      <td>${seats.remaining}</td>
       <td><span class="badge badge--${c.is_active ? 'active' : 'dropped'}">${c.is_active ? 'Open' : 'Closed'}</span></td>
       <td>${formatDate(c.created_at)}</td>
       <td class="table-actions">
@@ -102,8 +124,8 @@ function renderAdminTable() {
         <button type="button" class="btn btn--danger btn--sm btn-delete-catalog" data-id="${c.id}">Delete</button>
       </td>
     </tr>
-  `
-    )
+  `;
+    })
     .join('');
 
   tbody.querySelectorAll('.btn-edit-catalog').forEach((btn) => {
@@ -118,6 +140,7 @@ function resetCatalogForm(form) {
   form.reset();
   if (form.is_active) form.is_active.checked = true;
   if (form.section) form.section.value = 'A';
+  if (form.seat_capacity) form.seat_capacity.value = '30';
   editingCatalogId = null;
   document.getElementById('form-heading').textContent = 'Add course to catalog';
   form.querySelector('[type="submit"]').textContent = 'Add course';
@@ -133,6 +156,7 @@ function startEditCatalog(id) {
   form.title.value = course.title;
   form.code.value = course.code;
   form.section.value = course.section || 'A';
+  form.seat_capacity.value = course.seat_capacity ?? 30;
   form.credits.value = course.credits;
   form.instructor.value = course.instructor;
   form.is_active.checked = !!course.is_active;
@@ -168,6 +192,7 @@ function bindAdminForm() {
       title: form.title.value,
       code: form.code.value,
       section: form.section.value,
+      seat_capacity: form.seat_capacity.value,
       credits: form.credits.value,
       instructor: form.instructor.value,
       is_active: form.is_active.checked,
@@ -213,6 +238,7 @@ async function loadStudentViews() {
 
   catalogCache = catalogRes.data || [];
   enrollmentsCache = enrollRes.data || [];
+  await loadSeatMap();
 
   renderAvailableCourses();
   renderMyEnrollments();
@@ -243,6 +269,8 @@ function renderAvailableCourses() {
   tbody.innerHTML = available
     .map((c) => {
       const taken = enrolled.has(c.id);
+      const left = seatMap[c.id]?.remaining ?? c.seat_capacity ?? 0;
+      const full = !taken && left <= 0;
       return `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
@@ -250,11 +278,14 @@ function renderAvailableCourses() {
       <td>${escapeHtml(c.title)}</td>
       <td>${c.credits}</td>
       <td>${escapeHtml(c.instructor)}</td>
+      <td><strong>${left}</strong></td>
       <td>
         ${
           taken
             ? '<span class="badge badge--completed">Selected</span>'
-            : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
+            : full
+              ? '<span class="badge badge--dropped">Full</span>'
+              : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
         }
       </td>
     </tr>

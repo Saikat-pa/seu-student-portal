@@ -55,6 +55,10 @@
                 <input type="text" id="course-section" name="section" maxlength="10" placeholder="A, B, 1, 10" required />
               </div>
               <div class="form-group">
+                <label for="course-seats">Available seats</label>
+                <input type="number" id="course-seats" name="seat_capacity" min="0" max="500" value="30" required />
+              </div>
+              <div class="form-group">
                 <label for="course-credits">Credits</label>
                 <input type="number" id="course-credits" name="credits" min="1" max="12" value="3" required />
               </div>
@@ -87,6 +91,9 @@
                   <th>Title</th>
                   <th>Credits</th>
                   <th>Instructor</th>
+                  <th>Seats</th>
+                  <th>Enrolled</th>
+                  <th>Left</th>
                   <th>Open</th>
                   <th>Added</th>
                   <th>Actions</th>
@@ -113,6 +120,7 @@
                   <th>Title</th>
                   <th>Credits</th>
                   <th>Instructor</th>
+                  <th>Seats left</th>
                   <th>Action</th>
                 </tr>
               </thead>

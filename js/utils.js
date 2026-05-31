@@ -73,6 +73,7 @@ export function validateCatalogForm(data) {
   const code = data.code?.trim().toUpperCase();
   const section = data.section?.trim().toUpperCase();
   const credits = Number(data.credits);
+  const seat_capacity = Number(data.seat_capacity);
   const instructor = data.instructor?.trim();
   const isActive = data.is_active === true || data.is_active === 'true' || data.is_active === 'on';
 
@@ -98,6 +99,10 @@ export function validateCatalogForm(data) {
     errors.credits = 'Credits must be a whole number from 1 to 12.';
   }
 
+  if (!Number.isInteger(seat_capacity) || seat_capacity < 0 || seat_capacity > 500) {
+    errors.seat_capacity = 'Available seats must be 0–500.';
+  }
+
   if (!instructor) {
     errors.instructor = 'Instructor name is required.';
   } else if (instructor.length > 80) {
@@ -106,7 +111,7 @@ export function validateCatalogForm(data) {
 
   return {
     errors,
-    values: { title, code, section, credits, instructor, is_active: isActive },
+    values: { title, code, section, seat_capacity, credits, instructor, is_active: isActive },
   };
 }
 

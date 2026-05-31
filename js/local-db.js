@@ -78,6 +78,7 @@ export function ensureSeeded() {
           title: 'Introduction to Computer Science',
           code: 'CS101',
           section: 'A',
+          seat_capacity: 40,
           credits: 3,
           instructor: 'Dr. Rahman',
           is_active: true,
@@ -89,6 +90,7 @@ export function ensureSeeded() {
           title: 'Calculus I',
           code: 'MATH101',
           section: '1',
+          seat_capacity: 35,
           credits: 4,
           instructor: 'Prof. Khan',
           is_active: true,
@@ -195,6 +197,27 @@ export async function localSignOut() {
   sessionStorage.removeItem(SESSION_KEY);
 }
 
+function countSeatsUsed(db, courseId) {
+  return db.enrollments.filter(
+    (e) => e.course_id === courseId && ['enrolled', 'completed'].includes(e.status)
+  ).length;
+}
+
+export async function localSeatRemainingMap() {
+  await ensureSeeded();
+  const db = loadDb();
+  const map = {};
+  for (const c of db.catalog) {
+    const enrolled = countSeatsUsed(db, c.id);
+    const cap = c.seat_capacity ?? 30;
+    map[c.id] = {
+      remaining: Math.max(0, cap - enrolled),
+      enrolled,
+    };
+  }
+  return { data: map, error: null };
+}
+
 export async function localListCatalog() {
   await ensureSeeded();
   const db = loadDb();
@@ -296,6 +319,10 @@ export async function localEnroll(userId, courseId) {
   if (!course) return { error: { message: 'Course is not available.' } };
   if (db.enrollments.some((e) => e.user_id === userId && e.course_id === courseId)) {
     return { error: { message: 'You are already enrolled in this course.' } };
+  }
+  const cap = course.seat_capacity ?? 30;
+  if (countSeatsUsed(db, courseId) >= cap) {
+    return { error: { message: 'No seats available.' } };
   }
   const row = {
     id: uuid(),

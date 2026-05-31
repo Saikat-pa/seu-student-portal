@@ -123,6 +123,23 @@ export async function ensureProfileForUser(user) {
   }
 }
 
+export async function fetchSeatRemainingMap() {
+  if (useLocalMode()) {
+    return local.localSeatRemainingMap();
+  }
+  const client = getSupabase();
+  const { data, error } = await client.rpc('catalog_seat_remaining');
+  if (error) return { data: null, error };
+  const map = {};
+  for (const row of data || []) {
+    map[row.course_id] = {
+      remaining: row.seats_remaining ?? 0,
+      enrolled: row.seats_enrolled ?? 0,
+    };
+  }
+  return { data: map, error: null };
+}
+
 export async function fetchCatalog() {
   if (useLocalMode()) {
     return local.localListCatalog();
@@ -179,6 +196,11 @@ export async function fetchEnrollments(userId) {
 export async function enrollInCourse(userId, courseId) {
   if (useLocalMode()) {
     return local.localEnroll(userId, courseId);
+  }
+  const { data: seatMap } = await fetchSeatRemainingMap();
+  const seats = seatMap?.[courseId];
+  if (seats && seats.remaining <= 0) {
+    return { data: null, error: { message: 'No seats available.' } };
   }
   const client = getSupabase();
   const { data, error } = await client
