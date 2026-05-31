@@ -453,6 +453,13 @@ img {
   color: var(--color-primary);
   font-weight: 600;
 }
+
+html:not([data-nav-auth='in']) .nav-link[data-page='dashboard.html'],
+html:not([data-nav-auth='in']) .nav-link[data-page='courses.html'],
+html:not([data-nav-auth='in']) [data-auth-required] {
+  display: none !important;
+}
+
 #nav-auth {
   display: flex;
   align-items: center;

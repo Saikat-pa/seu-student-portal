@@ -63,9 +63,12 @@ export function initNavAuth() {
   }
 
   getSession().then(async ({ session }) => {
+    const signedIn = Boolean(session?.user);
+    document.documentElement.dataset.navAuth = signedIn ? 'in' : 'out';
+
     const coursesLink = document.querySelector('.nav-link[data-page="courses.html"]');
 
-    if (session?.user) {
+    if (signedIn) {
       const profile = await getUserProfile();
       const isAdmin = isAdminRole(profile?.role);
       if (coursesLink) {
