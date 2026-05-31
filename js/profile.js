@@ -4,11 +4,24 @@ import { uploadAvatar, updateProfile } from './api.js';
 import { openAvatarCrop, initAvatarCrop } from './avatar-crop.js';
 import {
   avatarInitials,
+  formatCgpa,
   mapProfileRow,
   validateAvatarFile,
   validateProfilePatch,
 } from './profile-utils.js';
 import { escapeHtml, showToast, setFieldError, clearFieldError } from './utils.js';
+
+const FIELD_LABELS = [
+  ['fullName', 'Name'],
+  ['email', 'Email'],
+  ['batch', 'Batch'],
+  ['department', 'Department'],
+  ['session', 'Session'],
+  ['gender', 'Gender'],
+  ['contactNumber', 'Contact number'],
+  ['cgpa', 'CGPA'],
+  ['role', 'Role'],
+];
 
 function renderAvatar(profile) {
   const wrap = document.getElementById('profile-avatar-wrap');
@@ -20,6 +33,18 @@ function renderAvatar(profile) {
   }
   const removeBtn = document.getElementById('avatar-remove');
   if (removeBtn) removeBtn.hidden = !profile.avatarUrl;
+}
+
+function renderReadOnlyFields(profile) {
+  const dl = document.getElementById('profile-fields');
+  if (!dl) return;
+  dl.innerHTML = FIELD_LABELS.map(([key, label]) => {
+    let value = profile[key];
+    if (key === 'cgpa') value = formatCgpa(profile.cgpa);
+    if (key === 'role') value = isAdminRole(profile.role) ? 'Administrator' : 'Student';
+    if (value === '' || value == null) value = '—';
+    return `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`;
+  }).join('');
 }
 
 function fillProfileForm(profile) {
@@ -37,6 +62,20 @@ function fillProfileForm(profile) {
   const roleEl = document.getElementById('profile-role-display');
   if (roleEl) {
     roleEl.textContent = isAdminRole(profile.role) ? 'Administrator' : 'Student';
+  }
+}
+
+function setProfileEditorMode(isAdmin, profile) {
+  const form = document.getElementById('profile-form');
+  const fields = document.getElementById('profile-fields');
+  if (isAdmin) {
+    if (form) form.hidden = false;
+    if (fields) fields.hidden = true;
+    fillProfileForm(profile);
+  } else {
+    if (form) form.hidden = true;
+    if (fields) fields.hidden = false;
+    renderReadOnlyFields(profile);
   }
 }
 
@@ -131,7 +170,7 @@ export async function initProfilePage() {
     const profile = await getUserProfile();
     if (!profile) return;
     renderAvatar(profile);
-    fillProfileForm(profile);
+    setProfileEditorMode(isAdminRole(profile.role), profile);
     return profile;
   }
 
@@ -142,20 +181,21 @@ export async function initProfilePage() {
   const heading = document.getElementById('profile-heading');
   const sub = document.getElementById('profile-sub');
   const adminNote = document.getElementById('profile-admin-note');
+  const studentNote = document.getElementById('profile-student-note');
 
   if (isAdmin) {
     if (heading) heading.textContent = 'My profile (Admin)';
     if (sub) sub.textContent = 'Edit your details and photo below. Manage other students from the Students page.';
     if (adminNote) adminNote.hidden = false;
+    if (studentNote) studentNote.hidden = true;
+    bindProfileForm(session.user.id, reload);
   } else {
-    if (sub) {
-      sub.textContent = 'Update your name, contact, academic details, and profile photo below.';
-    }
+    if (sub) sub.textContent = 'View your details below. You can update your profile photo only.';
     if (adminNote) adminNote.hidden = true;
+    if (studentNote) studentNote.hidden = false;
   }
 
   bindPhotoUpload(session.user.id, reload);
-  bindProfileForm(session.user.id, reload);
 }
 
 export { mapProfileRow, renderAvatar };

@@ -201,6 +201,15 @@ export async function localUpdateProfile(userId, patch) {
   if (!isAdmin && actorId !== userId) {
     return { data: null, error: { message: 'Admin access only.' } };
   }
+  if (!isAdmin && actorId === userId) {
+    const keys = Object.keys(patch);
+    if (keys.some((k) => k !== 'avatar_url')) {
+      return {
+        data: null,
+        error: { message: 'Students can only update profile photo on the Profile page.' },
+      };
+    }
+  }
   if (!isAdmin && patch.role != null) {
     delete patch.role;
   }

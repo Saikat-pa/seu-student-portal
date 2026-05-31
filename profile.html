@@ -28,7 +28,7 @@
     <div class="container">
       <header class="page-header">
         <h1 id="profile-heading">My profile</h1>
-        <p id="profile-sub">Update your details and profile photo below.</p>
+        <p id="profile-sub">View your profile and photo.</p>
       </header>
 
       <section class="card profile-card">
@@ -42,7 +42,13 @@
           </div>
         </div>
 
-        <form id="profile-form" class="profile-form" novalidate>
+        <p id="profile-student-note" class="card-hint" hidden>
+          Other details are managed by the administrator. Contact admin if something needs to change.
+        </p>
+
+        <dl class="profile-grid" id="profile-fields" hidden></dl>
+
+        <form id="profile-form" class="profile-form" novalidate hidden>
           <div class="form-grid">
             <div class="form-group">
               <label for="profile-name">Name</label>
