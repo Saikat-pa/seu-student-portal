@@ -6,6 +6,13 @@ import { roleForEmail } from './roles.js';
 import { appUrl } from './app-url.js';
 import { profileToDb, validateAvatarFile } from './profile-utils.js';
 import { CSE_CURRICULUM, curriculumToCatalogRow } from './cse-curriculum.js';
+import {
+  DEFAULT_ENROLLMENT_LIMITS,
+  normalizeEnrollmentLimits,
+  enrolledCredits,
+  checkEnrollCredits,
+  checkDropCredits,
+} from './enrollment-limits.js';
 
 let supabase = null;
 
@@ -242,6 +249,30 @@ export async function deleteCatalog(id) {
   return { error };
 }
 
+export async function fetchEnrollmentLimits() {
+  if (useLocalMode()) {
+    return local.localGetEnrollmentLimits();
+  }
+  const client = getSupabase();
+  const { data, error } = await client.from('portal_settings').select('*').eq('id', 1).maybeSingle();
+  if (error) return { data: null, error };
+  return { data: normalizeEnrollmentLimits(data || DEFAULT_ENROLLMENT_LIMITS), error: null };
+}
+
+export async function updateEnrollmentLimits(limits) {
+  const normalized = normalizeEnrollmentLimits(limits);
+  if (useLocalMode()) {
+    return local.localUpdateEnrollmentLimits(normalized);
+  }
+  const client = getSupabase();
+  const { data, error } = await client
+    .from('portal_settings')
+    .upsert({ id: 1, ...normalized })
+    .select('*')
+    .single();
+  return { data: data ? normalizeEnrollmentLimits(data) : null, error };
+}
+
 export async function fetchEnrollments(userId) {
   if (useLocalMode()) {
     return local.localListEnrollments(userId);
@@ -262,7 +293,7 @@ export async function enrollInCourse(userId, courseId) {
   const client = getSupabase();
   const { data: targetCourse, error: courseErr } = await client
     .from('course_catalog')
-    .select('id, code, is_active')
+    .select('id, code, is_active, credits')
     .eq('id', courseId)
     .single();
   if (courseErr || !targetCourse?.is_active) {
@@ -270,7 +301,7 @@ export async function enrollInCourse(userId, courseId) {
   }
   const { data: existing, error: existErr } = await client
     .from('enrollments')
-    .select('id, course_id, status, course_catalog(code)')
+    .select('id, course_id, status, course_catalog(code, credits)')
     .eq('user_id', userId)
     .in('status', ['enrolled', 'completed']);
   if (existErr) return { data: null, error: existErr };
@@ -287,6 +318,15 @@ export async function enrollInCourse(userId, courseId) {
       data: null,
       error: { message: 'You already selected this course code in another section.' },
     };
+  }
+  const { data: limits } = await fetchEnrollmentLimits();
+  const creditCheck = checkEnrollCredits(
+    enrolledCredits(existing),
+    targetCourse.credits ?? 0,
+    limits || DEFAULT_ENROLLMENT_LIMITS
+  );
+  if (!creditCheck.ok) {
+    return { data: null, error: { message: creditCheck.message } };
   }
   const { data: seatMap } = await fetchSeatRemainingMap();
   const seats = seatMap?.[courseId];
@@ -306,6 +346,28 @@ export async function dropEnrollment(userId, enrollmentId) {
     return local.localDropEnrollment(userId, enrollmentId);
   }
   const client = getSupabase();
+  const { data: row, error: rowErr } = await client
+    .from('enrollments')
+    .select('id, status, course_catalog(credits)')
+    .eq('id', enrollmentId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (rowErr) return { error: rowErr };
+  if (!row) return { error: { message: 'Enrollment not found.' } };
+  if (['enrolled', 'completed'].includes(row.status)) {
+    const { data: active } = await client
+      .from('enrollments')
+      .select('status, course_catalog(credits)')
+      .eq('user_id', userId)
+      .in('status', ['enrolled', 'completed']);
+    const { data: limits } = await fetchEnrollmentLimits();
+    const dropCheck = checkDropCredits(
+      enrolledCredits(active),
+      row.course_catalog?.credits ?? 0,
+      limits || DEFAULT_ENROLLMENT_LIMITS
+    );
+    if (!dropCheck.ok) return { error: { message: dropCheck.message } };
+  }
   const { error } = await client.from('enrollments').delete().eq('id', enrollmentId).eq('user_id', userId);
   return { error };
 }

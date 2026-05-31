@@ -352,3 +352,25 @@ create policy "avatars_update_own"
 create policy "avatars_delete_own"
   on storage.objects for delete to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Enrollment credit limits
+create table public.portal_settings (
+  id smallint primary key default 1 check (id = 1),
+  min_enrollment_credits integer not null default 0 check (min_enrollment_credits >= 0 and min_enrollment_credits <= 60),
+  max_enrollment_credits integer not null default 21 check (max_enrollment_credits >= 1 and max_enrollment_credits <= 60),
+  check (min_enrollment_credits <= max_enrollment_credits)
+);
+insert into public.portal_settings (id) values (1);
+
+alter table public.portal_settings enable row level security;
+
+create policy "portal_settings_select_auth"
+  on public.portal_settings for select to authenticated using (true);
+
+create policy "portal_settings_update_admin"
+  on public.portal_settings for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+create policy "portal_settings_insert_admin"
+  on public.portal_settings for insert to authenticated
+  with check (public.is_admin());

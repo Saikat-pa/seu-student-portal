@@ -45,6 +45,26 @@
       <!-- Admin: add / edit catalog -->
       <div id="admin-panel" hidden>
         <section class="card">
+          <h2 class="card__title">Enrollment credit limits</h2>
+          <p class="card-hint">Student এক semester-এ minimum / maximum কত credit নিতে পারবে সেটা এখানে ঠিক করুন।</p>
+          <form id="enrollment-limits-form" class="limits-form" novalidate>
+            <div class="form-grid form-grid--compact">
+              <div class="form-group">
+                <label for="limit-min">Minimum credits</label>
+                <input type="number" id="limit-min" name="min" min="0" max="60" value="0" required />
+              </div>
+              <div class="form-group">
+                <label for="limit-max">Maximum credits</label>
+                <input type="number" id="limit-max" name="max" min="1" max="60" value="21" required />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary btn--sm">Save limits</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
           <h2 class="card__title" id="form-heading">Add course</h2>
           <p class="card-hint">Section: <strong>A</strong>, <strong>B</strong>, <strong>1</strong>, <strong>10</strong> ইত্যাদি। একই কোডের জন্য আলাদা section = আলাদা row। Student শুধু Select করবে।</p>
           <form id="admin-course-form" novalidate>
@@ -136,6 +156,7 @@
       <div id="student-panel" hidden>
         <section class="card">
           <h2 class="card__title">Available courses</h2>
+          <p class="card-hint" id="credit-limit-summary" hidden></p>
           <p class="card-hint">যে section admin দিয়েছে সেটাই দেখাবে — <strong>Select</strong> চাপলেই enroll হবে। একই course code-এর শুধু একটি section নেওয়া যাবে।</p>
           <div id="student-available-filters"></div>
           <div class="table-wrap">

@@ -8,6 +8,8 @@ import {
   deleteCatalog,
   importCseCurriculum,
   openAllCatalogCourses,
+  fetchEnrollmentLimits,
+  updateEnrollmentLimits,
   fetchEnrollments,
   enrollInCourse,
   dropEnrollment,
@@ -35,6 +37,12 @@ import {
   catalogFilterBarHtml,
   enrollmentFilterBarHtml,
 } from './catalog-filters.js';
+import {
+  DEFAULT_ENROLLMENT_LIMITS,
+  enrolledCredits,
+  formatCreditLimitSummary,
+  validateEnrollmentLimitsForm,
+} from './enrollment-limits.js';
 
 let editingCatalogId = null;
 let catalogCache = [];
@@ -45,6 +53,7 @@ let seatMap = {};
 let catalogFilters = defaultCatalogFilters();
 let enrollmentFilters = defaultEnrollmentFilters();
 let adminPreviewMode = false;
+let enrollmentLimits = { ...DEFAULT_ENROLLMENT_LIMITS };
 
 function syncCoursePanels() {
   const adminPanel = document.getElementById('admin-panel');
@@ -176,6 +185,9 @@ function mapError(error) {
   if (/already selected this course code/i.test(msg)) {
     return 'You already selected this course code in another section. Drop that course first.';
   }
+  if (/maximum \d+ credits/i.test(msg) || /minimum \d+ credits/i.test(msg)) {
+    return msg;
+  }
   return msg;
 }
 
@@ -211,6 +223,60 @@ function applyValidationErrors(form, errors) {
   });
 }
 
+/* ——— Admin: enrollment credit limits ——— */
+
+async function loadEnrollmentLimits() {
+  const { data, error } = await fetchEnrollmentLimits();
+  if (error) {
+    showToast(mapError(error), 'error');
+    return;
+  }
+  enrollmentLimits = data || { ...DEFAULT_ENROLLMENT_LIMITS };
+}
+
+function fillEnrollmentLimitsForm() {
+  const minEl = document.getElementById('limit-min');
+  const maxEl = document.getElementById('limit-max');
+  if (minEl) minEl.value = String(enrollmentLimits.min_enrollment_credits);
+  if (maxEl) maxEl.value = String(enrollmentLimits.max_enrollment_credits);
+}
+
+function bindEnrollmentLimitsForm() {
+  const form = document.getElementById('enrollment-limits-form');
+  if (!form || form.dataset.bound) return;
+  form.dataset.bound = '1';
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const minEl = form.min;
+    const maxEl = form.max;
+    [minEl, maxEl].forEach(clearFieldError);
+    const { errors, limits } = validateEnrollmentLimitsForm(minEl.value, maxEl.value);
+    if (errors.min) setFieldError(minEl, errors.min);
+    if (errors.max) setFieldError(maxEl, errors.max);
+    if (Object.keys(errors).length) return;
+
+    const btn = form.querySelector('[type="submit"]');
+    btn.disabled = true;
+    const { data, error } = await updateEnrollmentLimits(limits);
+    btn.disabled = false;
+    if (error) {
+      showToast(mapError(error), 'error');
+      return;
+    }
+    enrollmentLimits = data || limits;
+    showToast('Credit limits saved.', 'success');
+    if (!isAdmin || adminPreviewMode) updateCreditLimitSummary();
+  });
+}
+
+function updateCreditLimitSummary() {
+  const el = document.getElementById('credit-limit-summary');
+  if (!el) return;
+  const current = enrolledCredits(enrollmentsCache);
+  el.textContent = formatCreditLimitSummary(current, enrollmentLimits);
+  el.hidden = false;
+}
+
 /* ——— Admin: catalog CRUD ——— */
 
 async function loadSeatMap() {
@@ -224,6 +290,8 @@ async function loadSeatMap() {
 }
 
 async function loadAdminCatalog() {
+  await loadEnrollmentLimits();
+  fillEnrollmentLimitsForm();
   const { data, error } = await fetchCatalog();
   if (error) {
     showToast(mapError(error), 'error');
@@ -396,6 +464,7 @@ function bindAdminForm() {
 /* ——— Student: enroll / select ——— */
 
 async function loadStudentViews() {
+  await loadEnrollmentLimits();
   const [catalogRes, enrollRes] = await Promise.all([
     fetchCatalog(),
     fetchEnrollments(currentUserId),
@@ -414,6 +483,7 @@ async function loadStudentViews() {
 
   renderAvailableCourses();
   renderMyEnrollments();
+  updateCreditLimitSummary();
 
   const el = document.getElementById('course-count');
   if (el) el.textContent = String(enrollmentsCache.length);
@@ -463,6 +533,8 @@ function renderAvailableCourses() {
 
   const enrolled = enrolledCourseIds();
   const enrolledCodes = enrolledCourseCodes();
+  const currentCredits = enrolledCredits(enrollmentsCache);
+  const maxCredits = enrollmentLimits.max_enrollment_credits;
 
   tbody.innerHTML = available
     .map((c) => {
@@ -470,6 +542,8 @@ function renderAvailableCourses() {
       const codeTaken = !taken && enrolledCodes.has((c.code || '').toUpperCase());
       const left = seatMap[c.id]?.remaining ?? c.seat_capacity ?? 0;
       const full = !taken && !codeTaken && left <= 0;
+      const overCredit =
+        !taken && !codeTaken && !full && currentCredits + (c.credits ?? 0) > maxCredits;
       const preview = isAdmin && adminPreviewMode;
       return `
     <tr>
@@ -489,9 +563,11 @@ function renderAvailableCourses() {
               ? '<span class="badge badge--completed">Selected</span>'
               : codeTaken
                 ? '<span class="badge badge--dropped" title="Same course code already selected in another section">Code taken</span>'
-                : full
-                  ? '<span class="badge badge--dropped">Full</span>'
-                  : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
+                : overCredit
+                  ? '<span class="badge badge--dropped" title="Maximum credit limit reached">Max credits</span>'
+                  : full
+                    ? '<span class="badge badge--dropped">Full</span>'
+                    : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
         }
       </td>
     </tr>
@@ -663,6 +739,7 @@ export async function initCoursesPage() {
     syncCoursePanels();
     updatePageHeaderForMode();
     bindAdminForm();
+    bindEnrollmentLimitsForm();
     document.getElementById('btn-import-curriculum')?.addEventListener('click', handleImportCurriculum);
     document.getElementById('btn-open-all')?.addEventListener('click', handleOpenAllCourses);
     document.getElementById('btn-preview-student')?.addEventListener('click', () => setAdminPreviewMode(true));

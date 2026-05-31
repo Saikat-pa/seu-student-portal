@@ -726,6 +726,10 @@ img {
   gap: 1rem;
 }
 
+.form-grid--compact {
+  max-width: 28rem;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

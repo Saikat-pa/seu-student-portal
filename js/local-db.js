@@ -1,9 +1,24 @@
 import { roleForEmail } from './roles.js';
 import { validateAvatarFile } from './profile-utils.js';
 import { CSE_CURRICULUM, curriculumToCatalogRow } from './cse-curriculum.js';
+import {
+  DEFAULT_ENROLLMENT_LIMITS,
+  normalizeEnrollmentLimits,
+  enrolledCredits,
+  checkEnrollCredits,
+  checkDropCredits,
+} from './enrollment-limits.js';
 
 const DB_KEY = 'student_portal_db_v2';
 const SESSION_KEY = 'student_portal_session';
+
+function ensureSettings(db) {
+  if (!db.settings) {
+    db.settings = { ...DEFAULT_ENROLLMENT_LIMITS };
+  }
+  db.settings = normalizeEnrollmentLimits(db.settings);
+  return db.settings;
+}
 
 function loadDb() {
   try {
@@ -11,12 +26,15 @@ function loadDb() {
     if (raw) {
       const db = JSON.parse(raw);
       if (!db.announcements) db.announcements = [];
+      ensureSettings(db);
       return db;
     }
   } catch {
     /* ignore */
   }
-  return { users: [], catalog: [], enrollments: [], announcements: [] };
+  const db = { users: [], catalog: [], enrollments: [], announcements: [], settings: null };
+  ensureSettings(db);
+  return db;
 }
 
 function saveDb(db) {
@@ -478,6 +496,21 @@ export async function localListEnrollments(userId) {
   return { data: rows, error: null };
 }
 
+export async function localGetEnrollmentLimits() {
+  await ensureSeeded();
+  const db = loadDb();
+  return { data: ensureSettings(db), error: null };
+}
+
+export async function localUpdateEnrollmentLimits(limits) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { data: null, error: { message: gate.message } };
+  const db = loadDb();
+  db.settings = normalizeEnrollmentLimits(limits);
+  saveDb(db);
+  return { data: db.settings, error: null };
+}
+
 export async function localEnroll(userId, courseId) {
   const db = loadDb();
   const course = db.catalog.find((c) => c.id === courseId && c.is_active);
@@ -492,6 +525,12 @@ export async function localEnroll(userId, courseId) {
   if (countSeatsUsed(db, courseId) >= cap) {
     return { error: { message: 'No seats available.' } };
   }
+  const limits = ensureSettings(db);
+  const activeRows = db.enrollments
+    .filter((e) => e.user_id === userId && ['enrolled', 'completed'].includes(e.status))
+    .map((e) => attachCourse(db, e));
+  const creditCheck = checkEnrollCredits(enrolledCredits(activeRows), course.credits ?? 0, limits);
+  if (!creditCheck.ok) return { error: { message: creditCheck.message } };
   const row = {
     id: uuid(),
     user_id: userId,
@@ -506,9 +545,21 @@ export async function localEnroll(userId, courseId) {
 
 export async function localDropEnrollment(userId, enrollmentId) {
   const db = loadDb();
-  const before = db.enrollments.length;
+  const row = db.enrollments.find((e) => e.id === enrollmentId && e.user_id === userId);
+  if (!row) return { error: { message: 'Enrollment not found.' } };
+  if (['enrolled', 'completed'].includes(row.status)) {
+    const course = db.catalog.find((c) => c.id === row.course_id);
+    const activeRows = db.enrollments
+      .filter((e) => e.user_id === userId && ['enrolled', 'completed'].includes(e.status))
+      .map((e) => attachCourse(db, e));
+    const dropCheck = checkDropCredits(
+      enrolledCredits(activeRows),
+      course?.credits ?? 0,
+      ensureSettings(db)
+    );
+    if (!dropCheck.ok) return { error: { message: dropCheck.message } };
+  }
   db.enrollments = db.enrollments.filter((e) => !(e.id === enrollmentId && e.user_id === userId));
-  if (db.enrollments.length === before) return { error: { message: 'Enrollment not found.' } };
   saveDb(db);
   return { error: null };
 }
