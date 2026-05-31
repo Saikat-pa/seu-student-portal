@@ -28,12 +28,15 @@ export async function updateSetupBanner() {
 
   const status = await checkSupabaseReady();
   if (status.ok) {
-    banner.hidden = true;
+    banner.hidden = false;
+    banner.className = 'config-banner config-banner--ok';
+    banner.innerHTML =
+      '✓ <strong>Live Supabase</strong> — <a href="login.html">Register</a> with your real email, then sign in to use courses and dashboard.';
     return;
   }
 
   banner.hidden = false;
-  banner.classList.remove('config-banner--demo');
+  banner.classList.remove('config-banner--demo', 'config-banner--ok');
 
   if (status.message === 'missing_table') {
     banner.classList.add('config-banner--warn');

@@ -3,6 +3,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, isSupabaseConfigured } from './config.
 import * as local from './local-db.js';
 import { wrapAuthCall } from './errors.js';
 import { roleForEmail } from './roles.js';
+import { appUrl } from './app-url.js';
 
 let supabase = null;
 
@@ -69,7 +70,11 @@ export async function signUp(payload) {
     return client.auth.signUp({
       ...payload,
       email,
-      options: { data: meta },
+      options: {
+        ...payload.options,
+        data: meta,
+        emailRedirectTo: appUrl('login.html'),
+      },
     });
   });
 }

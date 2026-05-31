@@ -4,9 +4,11 @@ Static student portal for Southeast University — course selection, dashboard, 
 
 ## Live demo
 
-After GitHub Pages is enabled, the site is published at:
+**https://saikat-pa.github.io/seu-student-portal/**
 
-`https://<your-github-username>.github.io/seu-student-portal/`
+Supabase is enabled on the live site. Visitors should **Register** on the login page with a real email (not `demo@student.local`).
+
+One-time: set Auth redirect URLs — see [supabase/auth-urls.md](supabase/auth-urls.md).
 
 **Demo login (no Supabase):** `demo@student.local` / `demo12345`
 
