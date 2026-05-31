@@ -1,64 +1,64 @@
-/* Student Portal — themes (dark default + light) */
+/* Student Portal — themes (dark default + soft modern light) */
 :root,
 [data-theme='dark'] {
-  --color-bg: #06060f;
-  --color-surface: #12102a;
-  --color-surface-2: #1a1740;
-  --color-border: #2d2860;
-  --color-text: #f1f0ff;
-  --color-muted: #a5a3c9;
-  --color-primary: #a855f7;
-  --color-primary-hover: #9333ea;
-  --color-accent: #22d3ee;
+  --color-bg: #0c1017;
+  --color-surface: #151b26;
+  --color-surface-2: #1e2736;
+  --color-border: #2d3a4f;
+  --color-text: #e8edf4;
+  --color-muted: #8b9bb0;
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-accent: #2dd4bf;
   --color-accent-2: #f472b6;
   --color-success: #34d399;
-  --color-danger: #fb7185;
+  --color-danger: #f87171;
   --color-warning: #fbbf24;
-  --gradient-brand: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #06b6d4 100%);
-  --gradient-hero: linear-gradient(135deg, #c084fc, #f472b6, #22d3ee);
-  --gradient-btn: linear-gradient(135deg, #9333ea, #db2777);
-  --gradient-btn-hover: linear-gradient(135deg, #7e22ce, #be185d);
-  --header-bg: rgba(6, 6, 15, 0.82);
-  --color-row-hover: rgba(168, 85, 247, 0.08);
-  --glow-primary: 0 0 40px rgba(168, 85, 247, 0.25);
-  --mesh-1: rgba(168, 85, 247, 0.22);
-  --mesh-2: rgba(236, 72, 153, 0.12);
-  --mesh-3: rgba(34, 211, 238, 0.1);
+  --gradient-brand: linear-gradient(135deg, #6366f1 0%, #2dd4bf 50%, #818cf8 100%);
+  --gradient-hero: linear-gradient(135deg, #818cf8, #2dd4bf, #6366f1);
+  --gradient-btn: linear-gradient(135deg, #4f46e5, #0d9488);
+  --gradient-btn-hover: linear-gradient(135deg, #4338ca, #0f766e);
+  --header-bg: rgba(12, 16, 23, 0.88);
+  --color-row-hover: rgba(99, 102, 241, 0.1);
+  --glow-primary: 0 0 40px rgba(99, 102, 241, 0.2);
+  --mesh-1: rgba(99, 102, 241, 0.18);
+  --mesh-2: rgba(45, 212, 191, 0.1);
+  --mesh-3: rgba(129, 140, 248, 0.08);
   --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --radius: 14px;
   --radius-sm: 9px;
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  --shadow-card: 0 8px 32px rgba(168, 85, 247, 0.12);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.25);
   --header-h: 64px;
   --max-w: 1100px;
 }
 
 [data-theme='light'] {
-  --color-bg: #f5f3ff;
-  --color-surface: #ffffff;
-  --color-surface-2: #ede9fe;
-  --color-border: #ddd6fe;
-  --color-text: #1e1b4b;
-  --color-muted: #64748b;
-  --color-primary: #7c3aed;
-  --color-primary-hover: #6d28d9;
-  --color-accent: #0891b2;
-  --color-accent-2: #db2777;
+  --color-bg: #dce3ed;
+  --color-surface: #e8eef5;
+  --color-surface-2: #cfd9e6;
+  --color-border: #b0becf;
+  --color-text: #141c28;
+  --color-muted: #4a5d73;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-accent: #0d9488;
+  --color-accent-2: #be185d;
   --color-success: #059669;
-  --color-danger: #e11d48;
-  --color-warning: #d97706;
-  --gradient-brand: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #0891b2 100%);
-  --gradient-hero: linear-gradient(135deg, #7c3aed, #db2777, #0891b2);
-  --gradient-btn: linear-gradient(135deg, #7c3aed, #c026d3);
-  --gradient-btn-hover: linear-gradient(135deg, #6d28d9, #a21caf);
-  --header-bg: rgba(255, 255, 255, 0.88);
-  --color-row-hover: rgba(124, 58, 237, 0.06);
-  --glow-primary: 0 0 32px rgba(124, 58, 237, 0.15);
-  --mesh-1: rgba(124, 58, 237, 0.14);
-  --mesh-2: rgba(219, 39, 119, 0.08);
-  --mesh-3: rgba(8, 145, 178, 0.08);
-  --shadow: 0 12px 40px rgba(124, 58, 237, 0.1);
-  --shadow-card: 0 8px 28px rgba(124, 58, 237, 0.08);
+  --color-danger: #dc2626;
+  --color-warning: #b45309;
+  --gradient-brand: linear-gradient(135deg, #4f46e5 0%, #0d9488 50%, #6366f1 100%);
+  --gradient-hero: linear-gradient(135deg, #6366f1, #0d9488, #4f46e5);
+  --gradient-btn: linear-gradient(135deg, #4f46e5, #0d9488);
+  --gradient-btn-hover: linear-gradient(135deg, #4338ca, #0f766e);
+  --header-bg: rgba(232, 238, 245, 0.92);
+  --color-row-hover: rgba(79, 70, 229, 0.08);
+  --glow-primary: 0 0 32px rgba(79, 70, 229, 0.12);
+  --mesh-1: rgba(79, 70, 229, 0.12);
+  --mesh-2: rgba(13, 148, 136, 0.1);
+  --mesh-3: rgba(99, 102, 241, 0.08);
+  --shadow: 0 12px 36px rgba(20, 28, 40, 0.12);
+  --shadow-card: 0 8px 24px rgba(20, 28, 40, 0.08);
 }
 *,
 *::before,
@@ -78,6 +78,10 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   transition: background 0.35s ease, color 0.35s ease;
+}
+
+[data-theme='light'] body {
+  background: linear-gradient(165deg, #d4dce8 0%, var(--color-bg) 45%, #c8d4e2 100%);
 }
 
 body::before {
@@ -764,13 +768,19 @@ textarea:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 0;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+[data-theme='light'] input,
+[data-theme='light'] select,
+[data-theme='light'] textarea {
+  background: var(--color-surface-2);
 }
 
 [data-theme='light'] input:focus,
 [data-theme='light'] select:focus,
 [data-theme='light'] textarea:focus {
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
 }
 .input--error {
   border-color: var(--color-danger);
