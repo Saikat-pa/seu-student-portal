@@ -18,27 +18,35 @@ const headers = {
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
 };
 
+async function probe(label, url, options = {}) {
+  const res = await fetch(url, { headers, ...options });
+  const text = await res.text();
+  const ok = res.ok;
+  console.log(`${label}:`, res.status, ok ? 'OK' : text.slice(0, 100));
+  return ok;
+}
+
 console.log('Checking Supabase…');
 console.log('URL:', SUPABASE_URL);
 
-const authRes = await fetch(`${SUPABASE_URL}/auth/v1/health`, { headers });
-console.log('Auth API:', authRes.status, authRes.status === 200 ? 'OK' : 'FAIL');
+const authOk = await probe('Auth API', `${SUPABASE_URL}/auth/v1/health`);
+let allOk = authOk;
 
-const tables = ['profiles', 'course_catalog', 'enrollments'];
-let allOk = true;
-
-for (const table of tables) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id&limit=1`, { headers });
-  const body = await res.text();
-  const ok = res.ok;
-  console.log(`${table}:`, res.status, ok ? 'OK' : body.slice(0, 120));
-  if (!ok) allOk = false;
-}
+allOk = (await probe('profiles (extended)', `${SUPABASE_URL}/rest/v1/profiles?select=id,batch,avatar_url,cgpa&limit=1`)) && allOk;
+allOk = (await probe('course_catalog (section+seats)', `${SUPABASE_URL}/rest/v1/course_catalog?select=id,section,seat_capacity&limit=1`)) && allOk;
+allOk = (await probe('enrollments', `${SUPABASE_URL}/rest/v1/enrollments?select=id&limit=1`)) && allOk;
+allOk = (await probe('announcements', `${SUPABASE_URL}/rest/v1/announcements?select=id&limit=1`)) && allOk;
+allOk = (await probe('seat RPC', `${SUPABASE_URL}/rest/v1/rpc/catalog_seat_remaining`, {
+  method: 'POST',
+  headers: { ...headers, 'Content-Type': 'application/json' },
+  body: '{}',
+})) && allOk;
 
 if (!allOk) {
-  console.log('\n→ Run supabase/install-once.sql in Supabase SQL Editor.');
+  console.log('\n→ Run supabase/upgrade-all.sql in Supabase SQL Editor (or install-once.sql if fresh).');
   process.exit(1);
 }
 
-console.log('\n✓ Supabase is ready.');
-console.log('  npm start  →  http://localhost:3000/login.html');
+console.log('\n✓ Supabase fully ready.');
+console.log('  Live: https://saikat-pa.github.io/seu-student-portal/');
+console.log('  Local: npm start → http://localhost:3000/login.html');

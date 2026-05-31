@@ -3,80 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Supabase setup — Student Portal</title>
+  <title>Setup — SEU Student Portal</title>
   <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/styles.css" />
   <style>
     .setup-steps { color: var(--color-muted); margin: 0 0 1rem; padding-left: 1.25rem; }
     .setup-steps li { margin-bottom: 0.5rem; }
-    #schema-box {
-      width: 100%;
-      min-height: 280px;
-      font-family: ui-monospace, monospace;
-      font-size: 0.8rem;
-    }
+    #schema-box { width: 100%; min-height: 200px; font-family: ui-monospace, monospace; font-size: 0.75rem; }
     .status-ok { color: var(--color-success); }
     .status-bad { color: var(--color-danger); }
+    .check-list { list-style: none; padding: 0; margin: 0 0 1rem; }
+    .check-list li { padding: 0.35rem 0; }
+    .check-list .ok { color: var(--color-success); }
+    .check-list .bad { color: var(--color-danger); }
   </style>
 </head>
 <body class="layout">
   <header class="site-header">
     <div class="container">
-      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <a href="index.html" class="logo" aria-label="SEU Student Portal home"></a>
     </div>
   </header>
-
   <main class="page">
-    <div class="container" style="max-width: 800px;">
+    <div class="container" style="max-width: 820px;">
       <header class="page-header">
-        <h1>Supabase setup</h1>
-        <p id="status-line">Checking connection…</p>
+        <h1>Portal setup</h1>
+        <p id="status-line">Checking…</p>
       </header>
 
       <section class="card">
-        <h2 class="card__title">আপনার একমাত্র কাজ (১ মিনিট)</h2>
+        <h2 class="card__title">Status</h2>
+        <ul class="check-list" id="check-list"></ul>
+      </section>
+
+      <section class="card">
+        <h2 class="card__title">১. Database (একবার)</h2>
+        <p class="card-hint">আগে <code>install-once.sql</code> চালিয়েছেন? শুধু <strong>upgrade-all.sql</strong> run করুন। নতুন project হলে <strong>install-once.sql</strong>।</p>
         <ol class="setup-steps">
-          <li>নিচের <strong>Copy SQL</strong> চাপুন</li>
-          <li><a href="https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new" target="_blank" rel="noopener">Supabase SQL Editor</a> খুলুন</li>
-          <li><a href="https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/auth/url-configuration" target="_blank" rel="noopener">Auth URL Configuration</a> — Site URL ও Redirect URLs সেট করুন (<code>supabase/auth-urls.md</code> দেখুন)</li>
-          <li>Section কলাম নেই? <code>supabase/schema-migrate-section.sql</code> run করুন</li>
-          <li>Seats কলাম নেই? <code>supabase/schema-migrate-seats.sql</code> run করুন</li>
-          <li>Notices টেবিল নেই? <code>supabase/schema-migrate-announcements.sql</code> run করুন</li>
-          <li>Profile fields + photo? <code>supabase/schema-migrate-profiles.sql</code> run করুন</li>
-          <li>Paste করুন → <strong>Run</strong></li>
-          <li>এই পেজে <strong>Check again</strong> চাপুন</li>
+          <li><strong>Copy SQL</strong> → <a href="https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new" target="_blank" rel="noopener">SQL Editor</a> → Paste → <strong>Run</strong></li>
+          <li><a href="https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/auth/url-configuration" target="_blank" rel="noopener">Auth URLs</a>: Site <code>https://saikat-pa.github.io/seu-student-portal/</code> · Redirect <code>https://saikat-pa.github.io/seu-student-portal/**</code></li>
+          <li>নিচে <strong>Check again</strong></li>
         </ol>
+        <div class="form-actions" style="margin-bottom: 0.75rem;">
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-load-upgrade">Load upgrade-all.sql</button>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-load-install">Load install-once.sql</button>
+        </div>
         <textarea id="schema-box" readonly></textarea>
         <div class="form-actions">
           <button type="button" class="btn btn--primary" id="btn-copy">Copy SQL</button>
           <button type="button" class="btn btn--ghost" id="btn-check">Check again</button>
           <a href="login.html" class="btn btn--ghost">Go to login</a>
+          <a href="https://saikat-pa.github.io/seu-student-portal/" class="btn btn--ghost" target="_blank" rel="noopener">Live site</a>
         </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card__title">২. Admin (একবার)</h2>
+        <ol class="setup-steps">
+          <li>Live site-এ <strong>Register</strong> করুন</li>
+          <li>SQL Editor-এ admin role দিন (আপনার ইমেইল):<br />
+            <code style="display:block;margin-top:0.5rem;white-space:pre-wrap">update public.profiles set role = 'admin'
+where id = (select id from auth.users where email = 'YOUR@EMAIL.com');</code></li>
+          <li>Sign out → Sign in → <strong>Students</strong>, <strong>Courses</strong>, <strong>Notices</strong> ব্যবহার করুন</li>
+        </ol>
       </section>
     </div>
   </main>
-
   <script type="module">
     import { initLayout } from './js/main.js';
-    import { checkSupabaseReady } from './js/supabase-health.js';
+    import { checkSupabaseReady, formatSetupStatus } from './js/supabase-health.js';
 
     initLayout();
 
     const statusLine = document.getElementById('status-line');
     const box = document.getElementById('schema-box');
+    const checkList = document.getElementById('check-list');
 
-    const res = await fetch('./supabase/schema.sql');
-    box.value = await res.text();
+    async function loadSql(path) {
+      box.value = await (await fetch(path)).text();
+    }
+
+    await loadSql('./supabase/upgrade-all.sql');
+
+    function renderChecks(status) {
+      const labels = {
+        course_catalog: 'Courses (section + seats)',
+        profiles: 'Profiles (batch, photo, CGPA)',
+        enrollments: 'Enrollments',
+        announcements: 'Notices',
+        seat_rpc: 'Seat counter',
+      };
+      checkList.innerHTML = Object.entries(labels)
+        .map(([key, label]) => {
+          const ok = status.checks?.[key];
+          return `<li class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${label}</li>`;
+        })
+        .join('');
+    }
 
     async function refreshStatus() {
       const s = await checkSupabaseReady();
-      if (s.ok) {
-        statusLine.innerHTML = '<span class="status-ok">✓ Supabase ready — course_catalog exists.</span>';
-      } else if (s.message === 'missing_table') {
-        statusLine.innerHTML = '<span class="status-bad">✗ course_catalog not found — run migration + schema SQL below.</span>';
-      } else {
-        statusLine.textContent = 'Check config.js or network.';
-      }
+      const formatted = formatSetupStatus(s);
+      statusLine.innerHTML = formatted.html;
+      renderChecks(s);
     }
 
     document.getElementById('btn-copy').addEventListener('click', async () => {
@@ -84,8 +113,10 @@
       document.getElementById('btn-copy').textContent = 'Copied!';
       setTimeout(() => { document.getElementById('btn-copy').textContent = 'Copy SQL'; }, 2000);
     });
-
     document.getElementById('btn-check').addEventListener('click', refreshStatus);
+    document.getElementById('btn-load-upgrade').addEventListener('click', () => loadSql('./supabase/upgrade-all.sql'));
+    document.getElementById('btn-load-install').addEventListener('click', () => loadSql('./supabase/install-once.sql'));
+
     refreshStatus();
   </script>
 </body>

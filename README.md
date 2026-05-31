@@ -1,21 +1,32 @@
 # SEU Student Portal
 
-Static student portal for Southeast University — course selection, dashboard, and login.
+Static student portal for Southeast University — courses, profiles, notices, and admin tools.
 
-## Live demo
+## Live site
 
 **https://saikat-pa.github.io/seu-student-portal/**
 
-Supabase is enabled on the live site. Visitors should **Register** on the login page with a real email (not `demo@student.local`).
+## One-time setup
 
-One-time: set Auth redirect URLs — see [supabase/auth-urls.md](supabase/auth-urls.md).
+1. Open [setup.html](https://saikat-pa.github.io/seu-student-portal/setup.html) on the live site (or locally).
+2. Copy **`supabase/upgrade-all.sql`** → [SQL Editor](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new) → Run.
+3. Set [Auth URLs](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/auth/url-configuration) (see [supabase/auth-urls.md](supabase/auth-urls.md)).
+4. Register on the live site, then set your account to admin in SQL (see setup page).
+5. Click **Check again** on setup — all items should show ✓.
 
-**Demo login (no Supabase):** `demo@student.local` / `demo12345`
+Fresh empty Supabase project? Use **`supabase/install-once.sql`** instead.
 
-## Supabase
+Verify locally: `npm run check`
 
-GitHub Pages uses `js/config.public.js` automatically (no Secrets required). Optional overrides: repository **Secrets** `SUPABASE_URL` and `SUPABASE_ANON_KEY` (`Settings → Secrets → Actions`).
+## Features
 
-Run `supabase/install-once.sql` once in the [SQL Editor](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new).
+- **Student:** login, course select (filters), profile view, photo upload, notices, dashboard
+- **Admin:** course catalog (section, seats), student directory (edit all fields), notices, filters
 
-Local setup: copy `js/config.example.js` to `js/config.js` and run `npm start`. Verify with `npm run check`.
+**Demo (no Supabase):** `demo@student.local` / `demo12345`
+
+## Deploy
+
+GitHub Pages uses `js/config.public.js` automatically. Optional Secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
+
+Local: copy `js/config.example.js` → `js/config.js`, then `npm start`.
