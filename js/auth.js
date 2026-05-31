@@ -82,11 +82,8 @@ export function bindLoginForm() {
   redirectIfAuthenticated();
 
   const demoHint = document.getElementById('demo-hint');
-  const supabaseHint = document.getElementById('supabase-hint');
   if (useLocalMode() && demoHint) {
     demoHint.hidden = false;
-  } else if (!useLocalMode() && supabaseHint) {
-    supabaseHint.hidden = false;
   }
 
   form.addEventListener('submit', async (e) => {
