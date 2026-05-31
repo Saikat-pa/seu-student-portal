@@ -21,7 +21,7 @@ export function initLayout() {
   }
 
   initNavAuth();
-  injectPortalNavLinks();
+  syncPortalNavLinks();
 
   const toggle = document.getElementById('nav-toggle');
   const nav = document.getElementById('main-nav');
@@ -33,42 +33,63 @@ export function initLayout() {
     });
   }
 
+  markActiveNavLink();
+}
+
+function markActiveNavLink() {
   const path = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.nav-link[data-page]').forEach((link) => {
-    if (link.dataset.page === path) {
-      link.classList.add('nav-link--active');
-    }
+    link.classList.toggle('nav-link--active', link.dataset.page === path);
   });
 }
 
-function injectPortalNavLinks() {
+function insertNavLink(nav, authSlot, href, label, page, afterSelector) {
+  const anchor = document.createElement('a');
+  anchor.href = href;
+  anchor.className = 'nav-link';
+  anchor.dataset.page = page;
+  anchor.textContent = label;
+  const after = afterSelector ? nav.querySelector(afterSelector) : null;
+  if (after) {
+    after.insertAdjacentElement('afterend', anchor);
+  } else {
+    nav.insertBefore(anchor, authSlot);
+  }
+  return anchor;
+}
+
+function syncPortalNavLinks() {
   getSession().then(async ({ session }) => {
     const nav = document.getElementById('main-nav');
     const authSlot = document.getElementById('nav-auth');
-    if (!nav || !session || nav.querySelector('[data-page="profile.html"]')) return;
+    if (!nav || !authSlot) return;
 
+    const signedIn = Boolean(session?.user);
     let isAdmin = false;
-    const profile = await getUserProfile();
-    isAdmin = isAdminRole(profile?.role);
-
-    const links = [
-      ['notices.html', 'Notices', 'notices.html'],
-      ['profile.html', 'Profile', 'profile.html'],
-    ];
-    if (isAdmin) links.unshift(['students.html', 'Students', 'students.html']);
-
-    for (const [href, label, page] of links) {
-      const link = document.createElement('a');
-      link.href = href;
-      link.className = 'nav-link';
-      link.dataset.page = page;
-      link.textContent = label;
-      nav.insertBefore(link, authSlot);
+    if (signedIn) {
+      const profile = await getUserProfile();
+      isAdmin = isAdminRole(profile?.role);
     }
 
-    const path = window.location.pathname.split('/').pop() || 'index.html';
-    nav.querySelectorAll('.nav-link[data-page]').forEach((link) => {
-      link.classList.toggle('nav-link--active', link.dataset.page === path);
-    });
+    const studentsLink = nav.querySelector('[data-page="students.html"]');
+    if (isAdmin) {
+      if (!studentsLink) {
+        insertNavLink(nav, authSlot, 'students.html', 'Students', 'students.html', '[data-page="courses.html"]');
+      }
+    } else if (studentsLink) {
+      studentsLink.remove();
+    }
+
+    const hasProfile = nav.querySelector('[data-page="profile.html"]');
+    if (signedIn && !hasProfile) {
+      if (!nav.querySelector('[data-page="notices.html"]')) {
+        insertNavLink(nav, authSlot, 'notices.html', 'Notices', 'notices.html');
+      }
+      if (!nav.querySelector('[data-page="profile.html"]')) {
+        insertNavLink(nav, authSlot, 'profile.html', 'Profile', 'profile.html');
+      }
+    }
+
+    markActiveNavLink();
   });
 }
