@@ -11,6 +11,7 @@ import { showToast, validateEmail, validatePassword, setFieldError, clearFieldEr
 import { normalizeAuthError } from './errors.js';
 import { isAdminRole } from './roles.js';
 import { mapProfileRow } from './profile-utils.js';
+import { appUrl } from './app-url.js';
 
 export { getSupabase } from './api.js';
 export { getSession, useLocalMode };
@@ -51,6 +52,16 @@ export function initNavAuth() {
   const navAuth = document.getElementById('nav-auth');
   if (!navAuth) return;
 
+  if (!navAuth.dataset.authBound) {
+    navAuth.dataset.authBound = '1';
+    navAuth.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-logout')) {
+        e.preventDefault();
+        void signOut();
+      }
+    });
+  }
+
   getSession().then(async ({ session }) => {
     const coursesLink = document.querySelector('.nav-link[data-page="courses.html"]');
 
@@ -63,7 +74,6 @@ export function initNavAuth() {
       navAuth.innerHTML = `
         <button type="button" class="btn btn--ghost btn--sm" id="btn-logout">Sign out</button>
       `;
-      document.getElementById('btn-logout')?.addEventListener('click', signOut);
     } else {
       if (coursesLink) coursesLink.textContent = 'Courses';
       navAuth.innerHTML = `<a href="login.html" class="btn btn--primary btn--sm">Sign in</a>`;
@@ -72,9 +82,16 @@ export function initNavAuth() {
 }
 
 export async function signOut() {
-  await apiSignOut();
-  showToast('Signed out successfully.', 'success');
-  window.location.href = 'index.html';
+  const btn = document.getElementById('btn-logout');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Signing out…';
+  }
+  try {
+    await apiSignOut();
+  } finally {
+    window.location.replace(appUrl('index.html'));
+  }
 }
 
 export function bindLoginForm() {

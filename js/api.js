@@ -80,13 +80,40 @@ export async function signUp(payload) {
   });
 }
 
+/** Remove Supabase + demo session from browser storage (always run after sign-out). */
+export function clearPersistedAuth() {
+  local.localSignOut();
+  try {
+    const ref = SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (key.startsWith('sb-') || (ref && key.includes(ref))) keys.push(key);
+    }
+    keys.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 export async function signOut() {
   if (useLocalMode()) {
-    await local.localSignOut();
+    clearPersistedAuth();
     return;
   }
   const client = getSupabase();
-  if (client) await client.auth.signOut();
+  try {
+    if (client) {
+      // Local scope clears storage even when the logout API fails (offline / stale token).
+      await client.auth.signOut({ scope: 'local' });
+    }
+  } catch {
+    /* still clear below */
+  } finally {
+    clearPersistedAuth();
+    supabase = null;
+  }
 }
 
 export async function fetchProfile(userId) {
