@@ -240,6 +240,19 @@ export async function openAllCatalogCourses() {
   return { updated: (data || []).length, error };
 }
 
+export async function closeAllCatalogCourses() {
+  if (useLocalMode()) {
+    return local.localCloseAllCatalog();
+  }
+  const client = getSupabase();
+  const { data, error } = await client
+    .from('course_catalog')
+    .update({ is_active: false })
+    .not('code', 'is', null)
+    .select('id');
+  return { updated: (data || []).length, error };
+}
+
 export async function deleteCatalog(id) {
   if (useLocalMode()) {
     return local.localDeleteCatalog(id);

@@ -8,6 +8,7 @@ import {
   deleteCatalog,
   importCseCurriculum,
   openAllCatalogCourses,
+  closeAllCatalogCourses,
   fetchEnrollmentLimits,
   updateEnrollmentLimits,
   fetchEnrollments,
@@ -700,6 +701,26 @@ async function handleOpenAllCourses() {
   await loadAdminCatalog();
 }
 
+async function handleCloseAllCourses() {
+  const open = catalogCache.filter((c) => c.is_active).length;
+  if (!open) {
+    showToast('All courses are already closed.', 'info');
+    return;
+  }
+  if (!window.confirm(`Close all ${open} open course(s)? Students will not be able to select them.`)) return;
+
+  const btn = document.getElementById('btn-close-all');
+  if (btn) btn.disabled = true;
+  const { updated, error } = await closeAllCatalogCourses();
+  if (btn) btn.disabled = false;
+  if (error) {
+    showToast(mapError(error), 'error');
+    return;
+  }
+  showToast(`Closed ${updated} course(s).`, 'success');
+  await loadAdminCatalog();
+}
+
 async function handleImportCurriculum() {
   if (
     !window.confirm(
@@ -749,6 +770,7 @@ export async function initCoursesPage() {
     bindEnrollmentLimitsForm();
     document.getElementById('btn-import-curriculum')?.addEventListener('click', handleImportCurriculum);
     document.getElementById('btn-open-all')?.addEventListener('click', handleOpenAllCourses);
+    document.getElementById('btn-close-all')?.addEventListener('click', handleCloseAllCourses);
     document.getElementById('btn-preview-student')?.addEventListener('click', () => setAdminPreviewMode(true));
     document.getElementById('btn-exit-preview')?.addEventListener('click', () => setAdminPreviewMode(false));
     await loadAdminCatalog();
