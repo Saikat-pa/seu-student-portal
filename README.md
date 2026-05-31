@@ -40,3 +40,4 @@ Local: copy `js/config.public.js` → `js/config.js`, then `npm start`.
 |------|-------------|
 | `supabase/install-once.sql` | Brand-new Supabase project |
 | `supabase/upgrade-all.sql` | Existing project — safe to re-run |
+| `supabase/seed-cse-courses.sql` | Load 56 CSE courses (after upgrade) |

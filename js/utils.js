@@ -75,6 +75,8 @@ export function validateCatalogForm(data) {
   const credits = Number(data.credits);
   const seat_capacity = Number(data.seat_capacity);
   const instructor = data.instructor?.trim();
+  const course_type = data.course_type?.trim() || '';
+  const prerequisite = data.prerequisite?.trim() || '';
   const isActive = data.is_active === true || data.is_active === 'true' || data.is_active === 'on';
 
   if (!title || title.length < 2) {
@@ -109,9 +111,27 @@ export function validateCatalogForm(data) {
     errors.instructor = 'Instructor name is too long.';
   }
 
+  if (course_type.length > 80) {
+    errors.course_type = 'Course type is too long.';
+  }
+
+  if (prerequisite.length > 120) {
+    errors.prerequisite = 'Prerequisite text is too long.';
+  }
+
   return {
     errors,
-    values: { title, code, section, seat_capacity, credits, instructor, is_active: isActive },
+    values: {
+      title,
+      code,
+      section,
+      seat_capacity,
+      credits,
+      instructor,
+      course_type,
+      prerequisite,
+      is_active: isActive,
+    },
   };
 }
 

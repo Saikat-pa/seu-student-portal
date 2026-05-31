@@ -137,3 +137,8 @@ create policy "avatars_delete_own" on storage.objects for delete to authenticate
 
 -- Done
 select 'Student Portal upgrade complete' as status;
+
+-- ─── Course type + prerequisite ───
+alter table public.course_catalog
+  add column if not exists course_type text not null default '',
+  add column if not exists prerequisite text not null default '';

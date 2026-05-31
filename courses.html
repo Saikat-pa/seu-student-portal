@@ -69,6 +69,14 @@
                 <input type="text" id="course-instructor" name="instructor" maxlength="80" required />
               </div>
               <div class="form-group">
+                <label for="course-type">Course type</label>
+                <input type="text" id="course-type" name="course_type" maxlength="80" placeholder="Core Courses, GED Core Courses…" />
+              </div>
+              <div class="form-group">
+                <label for="course-prerequisite">Prerequisite</label>
+                <input type="text" id="course-prerequisite" name="prerequisite" maxlength="120" placeholder="CSE1201 or leave empty" />
+              </div>
+              <div class="form-group">
                 <label class="checkbox-label">
                   <input type="checkbox" id="course-active" name="is_active" checked />
                   Open for student selection
@@ -83,7 +91,10 @@
         </section>
 
         <section class="card">
-          <h2 class="card__title">Course catalog</h2>
+          <div class="card__header-row">
+            <h2 class="card__title">Course catalog</h2>
+            <button type="button" class="btn btn--ghost btn--sm" id="btn-import-curriculum">Import CSE curriculum</button>
+          </div>
           <div id="admin-catalog-filters"></div>
           <div class="table-wrap">
             <table>
@@ -93,6 +104,8 @@
                   <th>Section</th>
                   <th>Title</th>
                   <th>Credits</th>
+                  <th>Type</th>
+                  <th>Prerequisite</th>
                   <th>Instructor</th>
                   <th>Seats</th>
                   <th>Enrolled</th>
@@ -124,6 +137,8 @@
                   <th>Section</th>
                   <th>Title</th>
                   <th>Credits</th>
+                  <th>Type</th>
+                  <th>Prerequisite</th>
                   <th>Instructor</th>
                   <th>Seats left</th>
                   <th>Action</th>

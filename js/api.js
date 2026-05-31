@@ -5,6 +5,7 @@ import { wrapAuthCall } from './errors.js';
 import { roleForEmail } from './roles.js';
 import { appUrl } from './app-url.js';
 import { profileToDb, validateAvatarFile } from './profile-utils.js';
+import { CSE_CURRICULUM, curriculumToCatalogRow } from './cse-curriculum.js';
 
 let supabase = null;
 
@@ -192,6 +193,22 @@ export async function insertCatalog(course) {
   const client = getSupabase();
   const { data, error } = await client.from('course_catalog').insert(course).select().single();
   return { data, error };
+}
+
+export async function importCseCurriculum() {
+  let added = 0;
+  let skipped = 0;
+  for (const course of CSE_CURRICULUM) {
+    const row = curriculumToCatalogRow(course);
+    const { error } = await insertCatalog(row);
+    if (error) {
+      if (/already exists/i.test(error.message || '')) skipped++;
+      else return { added, skipped, error };
+    } else {
+      added++;
+    }
+  }
+  return { added, skipped, error: null };
 }
 
 export async function updateCatalog(id, course) {

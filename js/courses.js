@@ -6,6 +6,7 @@ import {
   insertCatalog,
   updateCatalog,
   deleteCatalog,
+  importCseCurriculum,
   fetchEnrollments,
   enrollInCourse,
   dropEnrollment,
@@ -56,6 +57,9 @@ function refreshCatalogFilterOptions(root) {
     allLabel: 'All instructors',
   });
   fillSelect(root.querySelector('[data-filter-field="credits"]'), opts.credits, { allLabel: 'All credits' });
+  fillSelect(root.querySelector('[data-filter-field="courseType"]'), opts.courseTypes, {
+    allLabel: 'All types',
+  });
 }
 
 function setupAdminCatalogFilters() {
@@ -125,8 +129,20 @@ function getCatalogFields(form) {
     seat_capacity: form.seat_capacity,
     credits: form.credits,
     instructor: form.instructor,
+    course_type: form.course_type,
+    prerequisite: form.prerequisite,
     is_active: form.is_active,
   };
+}
+
+function cellCourseType(c) {
+  return c.course_type
+    ? `<span class="badge badge--active">${escapeHtml(c.course_type)}</span>`
+    : '—';
+}
+
+function cellPrerequisite(c) {
+  return c.prerequisite ? escapeHtml(c.prerequisite) : '—';
 }
 
 function applyValidationErrors(form, errors) {
@@ -201,6 +217,8 @@ function renderAdminTable() {
       <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title)}</td>
       <td>${c.credits}</td>
+      <td>${cellCourseType(c)}</td>
+      <td>${cellPrerequisite(c)}</td>
       <td>${escapeHtml(c.instructor)}</td>
       <td>${cap}</td>
       <td>${seats.enrolled}</td>
@@ -247,6 +265,8 @@ function startEditCatalog(id) {
   form.seat_capacity.value = course.seat_capacity ?? 30;
   form.credits.value = course.credits;
   form.instructor.value = course.instructor;
+  if (form.course_type) form.course_type.value = course.course_type || '';
+  if (form.prerequisite) form.prerequisite.value = course.prerequisite || '';
   form.is_active.checked = !!course.is_active;
   document.getElementById('form-heading').textContent = 'Edit course';
   form.querySelector('[type="submit"]').textContent = 'Save changes';
@@ -283,6 +303,8 @@ function bindAdminForm() {
       seat_capacity: form.seat_capacity.value,
       credits: form.credits.value,
       instructor: form.instructor.value,
+      course_type: form.course_type?.value || '',
+      prerequisite: form.prerequisite?.value || '',
       is_active: form.is_active.checked,
     };
     const { errors, values } = validateCatalogForm(raw);
@@ -396,6 +418,8 @@ function renderAvailableCourses() {
       <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title)}</td>
       <td>${c.credits}</td>
+      <td>${cellCourseType(c)}</td>
+      <td>${cellPrerequisite(c)}</td>
       <td>${escapeHtml(c.instructor)}</td>
       <td><strong>${left}</strong></td>
       <td>
@@ -512,6 +536,26 @@ async function handleStatusChange(enrollmentId, status) {
   await loadStudentViews();
 }
 
+async function handleImportCurriculum() {
+  if (
+    !window.confirm(
+      'Import all 56 CSE curriculum courses (section 1, instructor TBA)? Existing code+section rows are skipped.'
+    )
+  ) {
+    return;
+  }
+  const btn = document.getElementById('btn-import-curriculum');
+  if (btn) btn.disabled = true;
+  const { added, skipped, error } = await importCseCurriculum();
+  if (btn) btn.disabled = false;
+  if (error) {
+    showToast(mapError(error), 'error');
+    return;
+  }
+  showToast(`Imported ${added} course(s). Skipped ${skipped} duplicate(s).`, 'success');
+  await loadAdminCatalog();
+}
+
 export async function initCoursesPage() {
   const session = await requireAuth();
   if (!session) return;
@@ -538,6 +582,7 @@ export async function initCoursesPage() {
     if (pageTitle) pageTitle.textContent = 'Course catalog (Admin)';
     if (pageDesc) pageDesc.textContent = 'Add courses below — students will see them in Available courses.';
     bindAdminForm();
+    document.getElementById('btn-import-curriculum')?.addEventListener('click', handleImportCurriculum);
     await loadAdminCatalog();
   } else {
     if (pageTitle) pageTitle.textContent = 'My courses';

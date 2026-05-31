@@ -34,6 +34,8 @@ create table public.course_catalog (
   seat_capacity integer not null default 30 check (seat_capacity >= 0 and seat_capacity <= 500),
   credits integer not null check (credits >= 1 and credits <= 12),
   instructor text not null default '',
+  course_type text not null default '',
+  prerequisite text not null default '',
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

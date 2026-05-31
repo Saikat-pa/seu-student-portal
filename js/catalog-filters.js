@@ -6,6 +6,7 @@ export function defaultCatalogFilters() {
     section: '',
     instructor: '',
     credits: '',
+    courseType: '',
     seatFilter: 'all',
     sort: 'code-asc',
     openOnly: false,
@@ -26,12 +27,13 @@ export function catalogFilterOptions(courses) {
   const credits = [...new Set(courses.map((c) => c.credits).filter((n) => n != null))].sort(
     (a, b) => a - b
   );
-  return { sections, instructors, credits };
+  const courseTypes = [...new Set(courses.map((c) => c.course_type).filter(Boolean))].sort();
+  return { sections, instructors, credits, courseTypes };
 }
 
 function matchSearch(course, q) {
   if (!q) return true;
-  const hay = `${course.code} ${course.title} ${course.instructor} ${course.section || ''}`.toLowerCase();
+  const hay = `${course.code} ${course.title} ${course.instructor} ${course.section || ''} ${course.course_type || ''} ${course.prerequisite || ''}`.toLowerCase();
   return hay.includes(q.toLowerCase());
 }
 
@@ -43,6 +45,7 @@ export function applyCatalogFilters(courses, filters, { seatMap = {}, activeOnly
   if (filters.section) list = list.filter((c) => (c.section || '') === filters.section);
   if (filters.instructor) list = list.filter((c) => c.instructor === filters.instructor);
   if (filters.credits) list = list.filter((c) => String(c.credits) === String(filters.credits));
+  if (filters.courseType) list = list.filter((c) => (c.course_type || '') === filters.courseType);
   if (filters.search?.trim()) list = list.filter((c) => matchSearch(c, filters.search.trim()));
 
   if (filters.seatFilter === 'available') {
@@ -145,6 +148,7 @@ export function readCatalogFilters(root) {
     section: q('section'),
     instructor: q('instructor'),
     credits: q('credits'),
+    courseType: q('courseType'),
     seatFilter: q('seatFilter') || 'all',
     sort: q('sort') || 'code-asc',
     openOnly,
@@ -179,6 +183,10 @@ export function catalogFilterBarHtml(idPrefix) {
     <div class="form-group">
       <label for="${idPrefix}-credits">Credits</label>
       <select id="${idPrefix}-credits" data-filter-field="credits"></select>
+    </div>
+    <div class="form-group">
+      <label for="${idPrefix}-type">Type</label>
+      <select id="${idPrefix}-type" data-filter-field="courseType"></select>
     </div>
     <div class="form-group">
       <label for="${idPrefix}-seats">Seats</label>

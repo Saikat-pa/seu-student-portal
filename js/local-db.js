@@ -1,5 +1,6 @@
 import { roleForEmail } from './roles.js';
 import { validateAvatarFile } from './profile-utils.js';
+import { CSE_CURRICULUM, curriculumToCatalogRow } from './cse-curriculum.js';
 
 const DB_KEY = 'student_portal_db_v2';
 const SESSION_KEY = 'student_portal_session';
@@ -82,42 +83,23 @@ export function ensureSeeded() {
         }
       );
 
-      const c1 = uuid();
-      const c2 = uuid();
-      db.catalog.push(
-        {
-          id: c1,
-          title: 'Introduction to Computer Science',
-          code: 'CS101',
-          section: 'A',
-          seat_capacity: 40,
-          credits: 3,
-          instructor: 'Dr. Rahman',
-          is_active: true,
-          created_at: now,
-          updated_at: now,
-        },
-        {
-          id: c2,
-          title: 'Calculus I',
-          code: 'MATH101',
-          section: '1',
-          seat_capacity: 35,
-          credits: 4,
-          instructor: 'Prof. Khan',
-          is_active: true,
-          created_at: now,
-          updated_at: now,
-        }
-      );
-
-      db.enrollments.push({
+      db.catalog = CSE_CURRICULUM.map((course) => ({
         id: uuid(),
-        user_id: studentId,
-        course_id: c1,
-        status: 'enrolled',
+        ...curriculumToCatalogRow(course, { is_active: false }),
         created_at: now,
-      });
+        updated_at: now,
+      }));
+
+      const demoCourse = db.catalog.find((c) => c.code === 'CSE1201');
+      if (demoCourse) {
+        db.enrollments.push({
+          id: uuid(),
+          user_id: studentId,
+          course_id: demoCourse.id,
+          status: 'enrolled',
+          created_at: now,
+        });
+      }
 
       db.announcements.push({
         id: uuid(),
