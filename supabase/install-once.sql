@@ -142,17 +142,10 @@ begin
     return new;
   end if;
   if auth.uid() = old.id then
-    if new.full_name is distinct from old.full_name
-       or new.email is distinct from old.email
-       or new.batch is distinct from old.batch
-       or new.department is distinct from old.department
-       or new.session is distinct from old.session
-       or new.gender is distinct from old.gender
-       or new.contact_number is distinct from old.contact_number
-       or new.cgpa is distinct from old.cgpa
-       or new.role is distinct from old.role then
-      raise exception 'Only administrators can edit profile details';
+    if new.role is distinct from old.role then
+      raise exception 'Only administrators can change user role';
     end if;
+    return new;
   end if;
   return new;
 end;

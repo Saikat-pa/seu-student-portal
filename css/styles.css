@@ -1398,6 +1398,40 @@ textarea {
   align-items: flex-start;
 }
 
+.profile-form {
+  margin-bottom: 1rem;
+}
+
+.profile-readonly {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+}
+
+.avatar-crop__stage {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.avatar-crop__canvas {
+  width: 280px;
+  height: 280px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  cursor: grab;
+  touch-action: none;
+}
+
+.avatar-crop__canvas:active {
+  cursor: grabbing;
+}
+
+.avatar-crop__zoom {
+  max-width: 280px;
+  margin-inline: auto;
+}
+
 .profile-grid {
   display: grid;
   grid-template-columns: minmax(120px, auto) 1fr;

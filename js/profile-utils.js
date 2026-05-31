@@ -53,9 +53,17 @@ export function formatCgpa(value) {
 }
 
 export function validateAdminProfilePatch(patch) {
+  return validateProfilePatch(patch);
+}
+
+export function validateProfilePatch(patch) {
   const errors = {};
   const name = (patch.full_name ?? patch.fullName ?? '').trim();
   if (!name || name.length < 2) errors.full_name = 'Name is required (min 2 characters).';
+  const email = (patch.email ?? '').trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = 'Enter a valid email address.';
+  }
   if (patch.cgpa != null && patch.cgpa !== '') {
     const n = Number(patch.cgpa);
     if (Number.isNaN(n) || n < 0 || n > 4) errors.cgpa = 'CGPA must be between 0 and 4.';

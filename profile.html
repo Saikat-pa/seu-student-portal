@@ -28,7 +28,7 @@
     <div class="container">
       <header class="page-header">
         <h1 id="profile-heading">My profile</h1>
-        <p id="profile-sub">View your student information. Upload or change your photo below.</p>
+        <p id="profile-sub">Update your details and profile photo below.</p>
       </header>
 
       <section class="card profile-card">
@@ -38,24 +38,89 @@
             <label class="btn btn--primary btn--sm" for="avatar-input">Upload photo</label>
             <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
             <button type="button" class="btn btn--ghost btn--sm" id="avatar-remove" hidden>Remove photo</button>
-            <p class="card-hint">JPG, PNG, WebP or GIF · max 2 MB</p>
+            <p class="card-hint">JPG, PNG, WebP or GIF · max 2 MB · crop before upload</p>
           </div>
         </div>
 
-        <dl class="profile-grid" id="profile-fields"></dl>
+        <form id="profile-form" class="profile-form" novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="profile-name">Name</label>
+              <input type="text" id="profile-name" name="full_name" maxlength="80" required />
+            </div>
+            <div class="form-group">
+              <label for="profile-email">Email</label>
+              <input type="email" id="profile-email" name="email" maxlength="120" />
+            </div>
+            <div class="form-group">
+              <label for="profile-batch">Batch</label>
+              <input type="text" id="profile-batch" name="batch" maxlength="20" placeholder="58" />
+            </div>
+            <div class="form-group">
+              <label for="profile-department">Department</label>
+              <input type="text" id="profile-department" name="department" maxlength="80" placeholder="CSE" />
+            </div>
+            <div class="form-group">
+              <label for="profile-session">Session</label>
+              <input type="text" id="profile-session" name="session" maxlength="20" placeholder="2021-2022" />
+            </div>
+            <div class="form-group">
+              <label for="profile-gender">Gender</label>
+              <select id="profile-gender" name="gender">
+                <option value="">—</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="profile-contact">Contact number</label>
+              <input type="tel" id="profile-contact" name="contact_number" maxlength="20" />
+            </div>
+            <div class="form-group">
+              <label for="profile-cgpa">CGPA</label>
+              <input type="number" id="profile-cgpa" name="cgpa" min="0" max="4" step="0.01" placeholder="3.50" />
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <p class="profile-readonly" id="profile-role-display">Student</p>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">Save profile</button>
+          </div>
+        </form>
 
         <p id="profile-admin-note" class="card-hint" hidden>
-          Administrators manage student records on the
-          <a href="students.html">Students</a> page.
+          To edit other students, use the
+          <a href="students.html">Students</a> page in the navigation menu.
         </p>
 
         <div class="form-actions">
           <a href="dashboard.html" class="btn btn--ghost">Back to dashboard</a>
-          <a href="students.html" class="btn btn--primary" id="profile-students-link" hidden>Manage students</a>
         </div>
       </section>
     </div>
   </main>
+
+  <dialog id="avatar-crop-dialog" class="modal">
+    <div class="modal__inner avatar-crop">
+      <h2 class="card__title">Crop photo</h2>
+      <p class="card-hint">Drag to reposition · use zoom to adjust</p>
+      <div class="avatar-crop__stage">
+        <canvas id="avatar-crop-canvas" class="avatar-crop__canvas" aria-label="Crop preview"></canvas>
+      </div>
+      <div class="form-group avatar-crop__zoom">
+        <label for="avatar-crop-zoom">Zoom</label>
+        <input type="range" id="avatar-crop-zoom" min="1" max="3" step="0.01" value="1" />
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" id="avatar-crop-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="avatar-crop-apply">Use photo</button>
+      </div>
+    </div>
+  </dialog>
+
   <footer class="site-footer"><div class="container"><p data-footer-brand></p></div></footer>
   <script type="module">
     import { initLayout } from './js/main.js';
