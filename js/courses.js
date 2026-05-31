@@ -30,8 +30,9 @@ import {
   fillSelect,
   readCatalogFilters,
   readEnrollmentFilters,
+  catalogFilterBarHtml,
+  enrollmentFilterBarHtml,
 } from './catalog-filters.js';
-import { catalogFilterBarHtml, enrollmentFilterBarHtml } from './filter-bar-html.js';
 
 let editingCatalogId = null;
 let catalogCache = [];

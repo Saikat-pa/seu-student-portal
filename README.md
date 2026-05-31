@@ -10,11 +10,14 @@ Static student portal for Southeast University — courses, profiles, notices, a
 
 1. Open [setup.html](https://saikat-pa.github.io/seu-student-portal/setup.html) on the live site (or locally).
 2. Copy **`supabase/upgrade-all.sql`** → [SQL Editor](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new) → Run.
-3. Set [Auth URLs](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/auth/url-configuration) (see [supabase/auth-urls.md](supabase/auth-urls.md)).
+3. Set [Auth URLs](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/auth/url-configuration):
+   - **Site URL:** `https://saikat-pa.github.io/seu-student-portal/`
+   - **Redirect URLs:** `https://saikat-pa.github.io/seu-student-portal/**`
+   - Local dev: also add `http://localhost:3000/**` and `http://127.0.0.1:3000/**`
 4. Register on the live site, then set your account to admin in SQL (see setup page).
 5. Click **Check again** on setup — all items should show ✓.
 
-Fresh empty Supabase project? Use **`supabase/install-once.sql`** instead.
+Fresh empty Supabase project? Use **`supabase/install-once.sql`** instead of upgrade.
 
 Verify locally: `npm run check`
 
@@ -29,4 +32,11 @@ Verify locally: `npm run check`
 
 GitHub Pages uses `js/config.public.js` automatically. Optional Secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 
-Local: copy `js/config.example.js` → `js/config.js`, then `npm start`.
+Local: copy `js/config.public.js` → `js/config.js`, then `npm start`.
+
+## SQL files
+
+| File | When to use |
+|------|-------------|
+| `supabase/install-once.sql` | Brand-new Supabase project |
+| `supabase/upgrade-all.sql` | Existing project — safe to re-run |
