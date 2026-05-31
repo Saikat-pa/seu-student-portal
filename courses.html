@@ -19,6 +19,8 @@
         <a href="about.html" class="nav-link" data-page="about.html">About</a>
         <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
         <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <a href="notices.html" class="nav-link" data-page="notices.html">Notices</a>
+        <a href="profile.html" class="nav-link" data-page="profile.html">Profile</a>
         <span id="nav-auth"></span>
       </nav>
     </div>
@@ -82,6 +84,7 @@
 
         <section class="card">
           <h2 class="card__title">Course catalog</h2>
+          <div id="admin-catalog-filters"></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -103,6 +106,7 @@
             </table>
           </div>
           <p class="empty-state" id="admin-catalog-empty" hidden>No courses in catalog yet.</p>
+          <p class="empty-state" id="admin-catalog-filter-empty" hidden>No courses match your filters.</p>
         </section>
       </div>
 
@@ -111,6 +115,7 @@
         <section class="card">
           <h2 class="card__title">Available courses</h2>
           <p class="card-hint">যে section admin দিয়েছে সেটাই দেখাবে — <strong>Select</strong> চাপলেই enroll হবে।</p>
+          <div id="student-available-filters"></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -128,10 +133,12 @@
             </table>
           </div>
           <p class="empty-state" id="available-empty" hidden>No open courses right now. Check back later.</p>
+          <p class="empty-state" id="available-filter-empty" hidden>No courses match your filters.</p>
         </section>
 
         <section class="card">
           <h2 class="card__title">My selected courses</h2>
+          <div id="student-enrollment-filters"></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -148,6 +155,7 @@
             </table>
           </div>
           <p class="empty-state" id="enrollments-empty" hidden>You have not selected any courses yet.</p>
+          <p class="empty-state" id="enrollments-filter-empty" hidden>No enrollments match your filters.</p>
         </section>
       </div>
     </div>

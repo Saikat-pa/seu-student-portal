@@ -234,3 +234,48 @@ export async function updateEnrollmentStatus(userId, enrollmentId, status) {
     .single();
   return { data, error };
 }
+
+export async function updateProfile(userId, patch) {
+  if (useLocalMode()) {
+    return local.localUpdateProfile(userId, patch);
+  }
+  const client = getSupabase();
+  const { data, error } = await client
+    .from('profiles')
+    .update(patch)
+    .eq('id', userId)
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function fetchAnnouncements() {
+  if (useLocalMode()) {
+    return local.localListAnnouncements();
+  }
+  const client = getSupabase();
+  const { data, error } = await client
+    .from('announcements')
+    .select('*')
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  return { data, error };
+}
+
+export async function insertAnnouncement(row) {
+  if (useLocalMode()) {
+    return local.localInsertAnnouncement(row);
+  }
+  const client = getSupabase();
+  const { data, error } = await client.from('announcements').insert(row).select().single();
+  return { data, error };
+}
+
+export async function deleteAnnouncement(id) {
+  if (useLocalMode()) {
+    return local.localDeleteAnnouncement(id);
+  }
+  const client = getSupabase();
+  const { error } = await client.from('announcements').delete().eq('id', id);
+  return { error };
+}

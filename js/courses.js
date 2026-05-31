@@ -20,6 +20,18 @@ import {
   formatDate,
   formatCourseLabel,
 } from './utils.js';
+import {
+  applyCatalogFilters,
+  applyEnrollmentFilters,
+  bindFilterForm,
+  catalogFilterOptions,
+  defaultCatalogFilters,
+  defaultEnrollmentFilters,
+  fillSelect,
+  readCatalogFilters,
+  readEnrollmentFilters,
+} from './catalog-filters.js';
+import { catalogFilterBarHtml, enrollmentFilterBarHtml } from './filter-bar-html.js';
 
 let editingCatalogId = null;
 let catalogCache = [];
@@ -27,6 +39,61 @@ let enrollmentsCache = [];
 let currentUserId = null;
 let isAdmin = false;
 let seatMap = {};
+let catalogFilters = defaultCatalogFilters();
+let enrollmentFilters = defaultEnrollmentFilters();
+
+function updateFilterCount(root, shown, total) {
+  const el = root?.querySelector('[data-filter-count]');
+  if (el) el.textContent = total ? `Showing ${shown} of ${total}` : '';
+}
+
+function refreshCatalogFilterOptions(root) {
+  if (!root) return;
+  const opts = catalogFilterOptions(catalogCache);
+  fillSelect(root.querySelector('[data-filter-field="section"]'), opts.sections, { allLabel: 'All sections' });
+  fillSelect(root.querySelector('[data-filter-field="instructor"]'), opts.instructors, {
+    allLabel: 'All instructors',
+  });
+  fillSelect(root.querySelector('[data-filter-field="credits"]'), opts.credits, { allLabel: 'All credits' });
+}
+
+function setupAdminCatalogFilters() {
+  const mount = document.getElementById('admin-catalog-filters');
+  if (!mount || mount.dataset.ready) return;
+  mount.innerHTML = catalogFilterBarHtml('admin');
+  mount.dataset.ready = '1';
+  const root = mount.querySelector('[data-filter-root]');
+  refreshCatalogFilterOptions(root);
+  bindFilterForm(root, readCatalogFilters, () => {
+    catalogFilters = readCatalogFilters(root);
+    renderAdminTable();
+  });
+}
+
+function setupStudentAvailableFilters() {
+  const mount = document.getElementById('student-available-filters');
+  if (!mount || mount.dataset.ready) return;
+  mount.innerHTML = catalogFilterBarHtml('avail');
+  mount.dataset.ready = '1';
+  const root = mount.querySelector('[data-filter-root]');
+  refreshCatalogFilterOptions(root);
+  bindFilterForm(root, readCatalogFilters, () => {
+    catalogFilters = readCatalogFilters(root);
+    renderAvailableCourses();
+  });
+}
+
+function setupStudentEnrollmentFilters() {
+  const mount = document.getElementById('student-enrollment-filters');
+  if (!mount || mount.dataset.ready) return;
+  mount.innerHTML = enrollmentFilterBarHtml('mine');
+  mount.dataset.ready = '1';
+  const root = mount.querySelector('[data-filter-root]');
+  bindFilterForm(root, readEnrollmentFilters, () => {
+    enrollmentFilters = readEnrollmentFilters(root);
+    renderMyEnrollments();
+  });
+}
 
 function mapError(error) {
   if (!error) return null;
@@ -86,6 +153,9 @@ async function loadAdminCatalog() {
   }
   catalogCache = data || [];
   await loadSeatMap();
+  setupAdminCatalogFilters();
+  const root = document.getElementById('admin-catalog-filters')?.querySelector('[data-filter-root]');
+  refreshCatalogFilterOptions(root);
   renderAdminTable();
   const el = document.getElementById('course-count');
   if (el) el.textContent = String(catalogCache.length);
@@ -94,16 +164,30 @@ async function loadAdminCatalog() {
 function renderAdminTable() {
   const tbody = document.getElementById('admin-catalog-tbody');
   const empty = document.getElementById('admin-catalog-empty');
+  const filterEmpty = document.getElementById('admin-catalog-filter-empty');
+  const root = document.getElementById('admin-catalog-filters')?.querySelector('[data-filter-root]');
   if (!tbody) return;
 
   if (!catalogCache.length) {
     tbody.innerHTML = '';
     if (empty) empty.hidden = false;
+    if (filterEmpty) filterEmpty.hidden = true;
+    updateFilterCount(root, 0, 0);
     return;
   }
   if (empty) empty.hidden = true;
 
-  tbody.innerHTML = catalogCache
+  const filtered = applyCatalogFilters(catalogCache, catalogFilters, { seatMap });
+  updateFilterCount(root, filtered.length, catalogCache.length);
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    if (filterEmpty) filterEmpty.hidden = false;
+    return;
+  }
+  if (filterEmpty) filterEmpty.hidden = true;
+
+  tbody.innerHTML = filtered
     .map((c) => {
       const seats = seatMap[c.id] || { remaining: 0, enrolled: 0 };
       const cap = c.seat_capacity ?? 30;
@@ -239,6 +323,10 @@ async function loadStudentViews() {
   catalogCache = catalogRes.data || [];
   enrollmentsCache = enrollRes.data || [];
   await loadSeatMap();
+  setupStudentAvailableFilters();
+  setupStudentEnrollmentFilters();
+  const availRoot = document.getElementById('student-available-filters')?.querySelector('[data-filter-root]');
+  refreshCatalogFilterOptions(availRoot);
 
   renderAvailableCourses();
   renderMyEnrollments();
@@ -254,15 +342,29 @@ function enrolledCourseIds() {
 function renderAvailableCourses() {
   const tbody = document.getElementById('available-courses-tbody');
   const empty = document.getElementById('available-empty');
+  const filterEmpty = document.getElementById('available-filter-empty');
+  const root = document.getElementById('student-available-filters')?.querySelector('[data-filter-root]');
   if (!tbody) return;
 
-  const available = catalogCache.filter((c) => c.is_active);
-  if (!available.length) {
+  const base = catalogCache.filter((c) => c.is_active);
+  if (!base.length) {
     tbody.innerHTML = '';
     if (empty) empty.hidden = false;
+    if (filterEmpty) filterEmpty.hidden = true;
+    updateFilterCount(root, 0, 0);
     return;
   }
   if (empty) empty.hidden = true;
+
+  const available = applyCatalogFilters(base, catalogFilters, { seatMap, activeOnly: true });
+  updateFilterCount(root, available.length, base.length);
+
+  if (!available.length) {
+    tbody.innerHTML = '';
+    if (filterEmpty) filterEmpty.hidden = false;
+    return;
+  }
+  if (filterEmpty) filterEmpty.hidden = true;
 
   const enrolled = enrolledCourseIds();
 
@@ -301,16 +403,30 @@ function renderAvailableCourses() {
 function renderMyEnrollments() {
   const tbody = document.getElementById('enrollments-tbody');
   const empty = document.getElementById('enrollments-empty');
+  const filterEmpty = document.getElementById('enrollments-filter-empty');
+  const root = document.getElementById('student-enrollment-filters')?.querySelector('[data-filter-root]');
   if (!tbody) return;
 
   if (!enrollmentsCache.length) {
     tbody.innerHTML = '';
     if (empty) empty.hidden = false;
+    if (filterEmpty) filterEmpty.hidden = true;
+    updateFilterCount(root, 0, 0);
     return;
   }
   if (empty) empty.hidden = true;
 
-  tbody.innerHTML = enrollmentsCache
+  const filtered = applyEnrollmentFilters(enrollmentsCache, enrollmentFilters);
+  updateFilterCount(root, filtered.length, enrollmentsCache.length);
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    if (filterEmpty) filterEmpty.hidden = false;
+    return;
+  }
+  if (filterEmpty) filterEmpty.hidden = true;
+
+  tbody.innerHTML = filtered
     .map((e) => {
       const c = e.course_catalog || {};
       return `

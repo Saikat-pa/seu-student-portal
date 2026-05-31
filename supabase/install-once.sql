@@ -216,3 +216,29 @@ drop trigger if exists enrollments_check_seats on public.enrollments;
 create trigger enrollments_check_seats
   before insert on public.enrollments
   for each row execute function public.enforce_seat_capacity();
+
+-- Announcements / notices
+create table public.announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  body text not null default '',
+  is_pinned boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.announcements enable row level security;
+
+create policy "announcements_select_auth"
+  on public.announcements for select to authenticated using (true);
+
+create policy "announcements_insert_admin"
+  on public.announcements for insert to authenticated
+  with check (public.is_admin());
+
+create policy "announcements_update_admin"
+  on public.announcements for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+create policy "announcements_delete_admin"
+  on public.announcements for delete to authenticated
+  using (public.is_admin());

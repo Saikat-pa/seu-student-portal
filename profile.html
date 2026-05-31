@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — SEU Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="layout">
+  <div id="config-banner" class="config-banner" hidden aria-live="polite"></div>
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav class="nav nav--collapsible" id="main-nav" aria-label="Main">
+        <a href="index.html" class="nav-link" data-page="index.html">Home</a>
+        <a href="about.html" class="nav-link" data-page="about.html">About</a>
+        <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <a href="notices.html" class="nav-link" data-page="notices.html">Notices</a>
+        <a href="profile.html" class="nav-link" data-page="profile.html">Profile</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+  <main class="page">
+    <div class="container">
+      <header class="page-header">
+        <h1>My profile</h1>
+        <p>View your account details and update your display name.</p>
+      </header>
+      <section class="card">
+        <dl class="profile-dl">
+          <dt>Email</dt>
+          <dd id="profile-email">—</dd>
+          <dt>Role</dt>
+          <dd><span id="profile-role" class="badge badge--active">Student</span></dd>
+          <dt>User ID</dt>
+          <dd><code id="profile-id" class="profile-id">—</code></dd>
+        </dl>
+        <form id="profile-form" class="profile-form" novalidate>
+          <div class="form-group form-group--full">
+            <label for="profile-name">Full name</label>
+            <input type="text" id="profile-name" name="fullName" maxlength="80" required />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">Save profile</button>
+            <a href="dashboard.html" class="btn btn--ghost">Back to dashboard</a>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="container"><p data-footer-brand></p></div></footer>
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    import { initProfilePage } from './js/profile.js';
+    initLayout();
+    initProfilePage();
+  </script>
+</body>
+</html>

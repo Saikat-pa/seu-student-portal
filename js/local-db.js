@@ -6,11 +6,15 @@ const SESSION_KEY = 'student_portal_session';
 function loadDb() {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const db = JSON.parse(raw);
+      if (!db.announcements) db.announcements = [];
+      return db;
+    }
   } catch {
     /* ignore */
   }
-  return { users: [], catalog: [], enrollments: [] };
+  return { users: [], catalog: [], enrollments: [], announcements: [] };
 }
 
 function saveDb(db) {
@@ -107,6 +111,14 @@ export function ensureSeeded() {
         created_at: now,
       });
 
+      db.announcements.push({
+        id: uuid(),
+        title: 'Summer 2026 registration open',
+        body: 'Browse the course catalog and select your sections before seats fill up.',
+        is_pinned: true,
+        created_at: now,
+      });
+
       saveDb(db);
     })();
   }
@@ -144,6 +156,62 @@ export async function localGetProfile(userId) {
     },
     error: null,
   };
+}
+
+export async function localUpdateProfile(userId, patch) {
+  await ensureSeeded();
+  const db = loadDb();
+  const user = db.users.find((u) => u.id === userId);
+  if (!user) return { data: null, error: { message: 'Profile not found' } };
+  if (patch.full_name != null) user.full_name = String(patch.full_name).trim();
+  saveDb(db);
+  const session = await localGetSession();
+  if (session.session?.user?.id === userId) {
+    session.session.user.user_metadata.full_name = user.full_name;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session.session));
+  }
+  return {
+    data: { id: user.id, full_name: user.full_name, role: user.role },
+    error: null,
+  };
+}
+
+export async function localListAnnouncements() {
+  await ensureSeeded();
+  const db = loadDb();
+  const rows = [...(db.announcements || [])].sort((a, b) => {
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+  return { data: rows, error: null };
+}
+
+export async function localInsertAnnouncement(row) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { error: { message: gate.message } };
+  const db = loadDb();
+  const item = {
+    id: uuid(),
+    title: row.title,
+    body: row.body || '',
+    is_pinned: !!row.is_pinned,
+    created_at: new Date().toISOString(),
+  };
+  if (!db.announcements) db.announcements = [];
+  db.announcements.push(item);
+  saveDb(db);
+  return { data: item, error: null };
+}
+
+export async function localDeleteAnnouncement(id) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { error: { message: gate.message } };
+  const db = loadDb();
+  const before = (db.announcements || []).length;
+  db.announcements = (db.announcements || []).filter((a) => a.id !== id);
+  if (db.announcements.length === before) return { error: { message: 'Notice not found.' } };
+  saveDb(db);
+  return { error: null };
 }
 
 export async function localSignUp({ email, password, fullName, role }) {

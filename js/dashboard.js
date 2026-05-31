@@ -1,7 +1,7 @@
 import { requireAuth, getUserProfile } from './auth.js';
 import { isAdminRole } from './roles.js';
-import { fetchCatalog, fetchEnrollments } from './api.js';
-import { escapeHtml, formatCourseLabel } from './utils.js';
+import { fetchCatalog, fetchEnrollments, fetchAnnouncements } from './api.js';
+import { escapeHtml, formatCourseLabel, formatDate } from './utils.js';
 
 async function loadStudentDashboard(userId) {
   const { data, error } = await fetchEnrollments(userId);
@@ -92,9 +92,37 @@ async function loadAdminDashboard() {
   `).join('');
 }
 
+async function loadDashboardNotices() {
+  const list = document.getElementById('dashboard-notices');
+  const empty = document.getElementById('dashboard-notices-empty');
+  if (!list) return;
+
+  const { data, error } = await fetchAnnouncements();
+  if (error || !data?.length) {
+    list.innerHTML = '';
+    if (empty) empty.hidden = false;
+    return;
+  }
+  if (empty) empty.hidden = true;
+  list.innerHTML = data
+    .slice(0, 3)
+    .map(
+      (n) => `
+    <li class="notice-item notice-item--compact">
+      <strong>${escapeHtml(n.title)}</strong>
+      <span class="notice-item__meta">${formatDate(n.created_at)}</span>
+      <p>${escapeHtml(n.body.slice(0, 120))}${n.body.length > 120 ? '…' : ''}</p>
+    </li>
+  `
+    )
+    .join('');
+}
+
 export async function initDashboardPage() {
   const session = await requireAuth();
   if (!session) return;
+
+  await loadDashboardNotices();
 
   const profile = await getUserProfile();
   const nameEl = document.getElementById('dashboard-name');

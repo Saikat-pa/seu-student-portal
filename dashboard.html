@@ -19,6 +19,8 @@
         <a href="about.html" class="nav-link" data-page="about.html">About</a>
         <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
         <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <a href="notices.html" class="nav-link" data-page="notices.html">Notices</a>
+        <a href="profile.html" class="nav-link" data-page="profile.html">Profile</a>
         <span id="nav-auth"></span>
       </nav>
     </div>
@@ -55,11 +57,21 @@
           <strong>Courses</strong>
           <span>Go to the course catalog</span>
         </a>
-        <a href="login.html" class="quick-link">
-          <strong>Account settings</strong>
-          <span>Sign out or switch accounts from the header</span>
+        <a href="profile.html" class="quick-link">
+          <strong>My profile</strong>
+          <span>Update your name and view account details</span>
+        </a>
+        <a href="notices.html" class="quick-link">
+          <strong>Notices</strong>
+          <span>Read official announcements</span>
         </a>
       </div>
+
+      <section class="card" style="margin-top: 1.5rem;">
+        <h2 class="card__title">Latest notices</h2>
+        <ul class="notice-list notice-list--compact" id="dashboard-notices"></ul>
+        <p class="empty-state" id="dashboard-notices-empty" hidden>No notices. <a href="notices.html">View notices</a>.</p>
+      </section>
 
       <section class="card" style="margin-top: 1.5rem;">
         <h2 class="card__title" id="recent-title">Recent courses</h2>
