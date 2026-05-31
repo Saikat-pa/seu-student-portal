@@ -356,19 +356,19 @@ function renderAdminTable() {
       const cap = c.seat_capacity ?? 30;
       return `
     <tr>
-      <td><strong>${escapeHtml(c.code)}</strong></td>
-      <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
-      <td>${escapeHtml(c.title)}</td>
-      <td>${c.credits}</td>
-      <td>${cellCourseType(c)}</td>
+      <td class="col-code"><strong>${escapeHtml(c.code)}</strong></td>
+      <td class="col-section"><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
+      <td class="col-title">${escapeHtml(c.title)}</td>
+      <td class="col-num">${c.credits}</td>
+      <td class="col-type">${cellCourseType(c)}</td>
       <td>${cellPrerequisite(c)}</td>
       <td>${escapeHtml(c.instructor)}</td>
-      <td>${cap}</td>
-      <td>${seats.enrolled}</td>
-      <td>${seats.remaining}</td>
-      <td><span class="badge badge--${c.is_active ? 'active' : 'dropped'}">${c.is_active ? 'Open' : 'Closed'}</span></td>
+      <td class="col-num">${cap}</td>
+      <td class="col-num">${seats.enrolled}</td>
+      <td class="col-num">${seats.remaining}</td>
+      <td class="col-status"><span class="badge badge--${c.is_active ? 'active' : 'dropped'}">${c.is_active ? 'Open' : 'Closed'}</span></td>
       <td>${formatDate(c.created_at)}</td>
-      <td class="table-actions">
+      <td class="table-actions col-actions">
         <button type="button" class="btn btn--ghost btn--sm btn-edit-catalog" data-id="${c.id}">Edit</button>
         <button type="button" class="btn btn--danger btn--sm btn-delete-catalog" data-id="${c.id}">Delete</button>
       </td>
@@ -563,15 +563,15 @@ function renderAvailableCourses() {
         !taken && !codeTaken && !full && currentCredits + (c.credits ?? 0) > maxCredits;
       return `
     <tr>
-      <td><strong>${escapeHtml(c.code)}</strong></td>
-      <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
-      <td>${escapeHtml(c.title)}</td>
-      <td>${c.credits}</td>
-      <td>${cellCourseType(c)}</td>
+      <td class="col-code"><strong>${escapeHtml(c.code)}</strong></td>
+      <td class="col-section"><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
+      <td class="col-title">${escapeHtml(c.title)}</td>
+      <td class="col-num">${c.credits}</td>
+      <td class="col-type">${cellCourseType(c)}</td>
       <td>${cellPrerequisite(c)}</td>
       <td>${escapeHtml(c.instructor)}</td>
-      <td><strong>${left}</strong></td>
-      <td>
+      <td class="col-num"><strong>${left}</strong></td>
+      <td class="col-actions">
         ${
           taken
             ? '<span class="badge badge--completed">Selected</span>'
@@ -626,12 +626,12 @@ function renderMyEnrollments() {
       const canDrop = ['enrolled', 'completed'].includes(e.status);
       return `
     <tr>
-      <td><strong>${escapeHtml(c.code || '—')}</strong></td>
-      <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
-      <td>${escapeHtml(c.title || '—')}</td>
-      <td>${c.credits ?? '—'}</td>
-      <td>${enrollmentStatusBadge(e.status)}</td>
-      <td class="table-actions">
+      <td class="col-code"><strong>${escapeHtml(c.code || '—')}</strong></td>
+      <td class="col-section"><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
+      <td class="col-title">${escapeHtml(c.title || '—')}</td>
+      <td class="col-num">${c.credits ?? '—'}</td>
+      <td class="col-status">${enrollmentStatusBadge(e.status)}</td>
+      <td class="table-actions col-actions">
         ${
           canDrop
             ? `<button type="button" class="btn btn--danger btn--sm btn-drop" data-id="${e.id}">Drop</button>`

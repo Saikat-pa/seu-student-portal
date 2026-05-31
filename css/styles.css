@@ -31,6 +31,7 @@
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.25);
   --header-h: 64px;
   --max-w: 1100px;
+  --max-w-wide: 1560px;
 }
 
 [data-theme='light'] {
@@ -114,6 +115,10 @@ img {
 .container {
   width: min(100% - 2rem, var(--max-w));
   margin-inline: auto;
+}
+
+.container--wide {
+  width: min(100% - 1.25rem, var(--max-w-wide));
 }
 
 .site-header {
@@ -833,12 +838,60 @@ textarea:focus {
 .table-wrap {
   overflow-x: auto;
   margin-top: 1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.table-wrap--catalog {
+  margin-inline: -0.35rem;
+  padding-inline: 0.35rem 0.5rem;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+}
+
+.table--catalog {
+  font-size: 0.84rem;
+  min-width: 1080px;
+}
+
+.table--catalog th,
+.table--catalog td {
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
+}
+
+.table--catalog th {
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.table--catalog .col-num {
+  text-align: center;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.table--catalog .col-code,
+.table--catalog .col-section,
+.table--catalog .col-status,
+.table--catalog .col-actions {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.table--catalog .col-title {
+  min-width: 9rem;
+}
+
+.table--catalog .col-type .badge {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 th,

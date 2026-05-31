@@ -27,7 +27,7 @@
   </header>
 
   <main class="page">
-    <div class="container">
+    <div class="container container--wide">
       <header class="page-header">
         <h1 id="page-title">Courses</h1>
         <p id="page-desc">
@@ -125,23 +125,23 @@
             </div>
           </div>
           <div id="admin-catalog-filters"></div>
-          <div class="table-wrap">
-            <table>
+          <div class="table-wrap table-wrap--catalog">
+            <table class="table--catalog">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Section</th>
-                  <th>Title</th>
-                  <th>Credits</th>
-                  <th>Type</th>
+                  <th class="col-code">Code</th>
+                  <th class="col-section">Section</th>
+                  <th class="col-title">Title</th>
+                  <th class="col-num">Credits</th>
+                  <th class="col-type">Type</th>
                   <th>Prerequisite</th>
                   <th>Instructor</th>
-                  <th>Seats</th>
-                  <th>Enrolled</th>
-                  <th>Left</th>
-                  <th>Open</th>
+                  <th class="col-num">Seats</th>
+                  <th class="col-num">Enrolled</th>
+                  <th class="col-num">Left</th>
+                  <th class="col-status">Open</th>
                   <th>Added</th>
-                  <th>Actions</th>
+                  <th class="col-actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="admin-catalog-tbody"></tbody>
@@ -162,19 +162,19 @@
           <p class="card-hint" id="credit-limit-summary" hidden></p>
           <p class="card-hint">যে section admin দিয়েছে সেটাই দেখাবে — <strong>Select</strong> চাপলেই enroll হবে। একই course code-এর শুধু একটি section নেওয়া যাবে।</p>
           <div id="student-available-filters"></div>
-          <div class="table-wrap">
-            <table>
+          <div class="table-wrap table-wrap--catalog">
+            <table class="table--catalog">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Section</th>
-                  <th>Title</th>
-                  <th>Credits</th>
-                  <th>Type</th>
+                  <th class="col-code">Code</th>
+                  <th class="col-section">Section</th>
+                  <th class="col-title">Title</th>
+                  <th class="col-num">Credits</th>
+                  <th class="col-type">Type</th>
                   <th>Prerequisite</th>
                   <th>Instructor</th>
-                  <th>Seats left</th>
-                  <th>Action</th>
+                  <th class="col-num">Seats left</th>
+                  <th class="col-actions">Action</th>
                 </tr>
               </thead>
               <tbody id="available-courses-tbody"></tbody>
@@ -187,16 +187,16 @@
         <section class="card">
           <h2 class="card__title">My selected courses</h2>
           <div id="student-enrollment-filters"></div>
-          <div class="table-wrap">
-            <table>
+          <div class="table-wrap table-wrap--catalog">
+            <table class="table--catalog">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Section</th>
-                  <th>Title</th>
-                  <th>Credits</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th class="col-code">Code</th>
+                  <th class="col-section">Section</th>
+                  <th class="col-title">Title</th>
+                  <th class="col-num">Credits</th>
+                  <th class="col-status">Status</th>
+                  <th class="col-actions">Action</th>
                 </tr>
               </thead>
               <tbody id="enrollments-tbody"></tbody>
