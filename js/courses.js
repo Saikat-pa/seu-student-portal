@@ -58,21 +58,21 @@ let enrollmentLimits = { ...DEFAULT_ENROLLMENT_LIMITS };
 function syncCoursePanels() {
   const adminPanel = document.getElementById('admin-panel');
   const studentPanel = document.getElementById('student-panel');
-  const previewBanner = document.getElementById('admin-preview-banner');
+  const previewBar = document.getElementById('admin-preview-bar');
   if (!adminPanel || !studentPanel) return;
 
   if (isAdmin && adminPreviewMode) {
     adminPanel.hidden = true;
     studentPanel.hidden = false;
-    if (previewBanner) previewBanner.hidden = false;
+    if (previewBar) previewBar.hidden = false;
   } else if (isAdmin) {
     adminPanel.hidden = false;
     studentPanel.hidden = true;
-    if (previewBanner) previewBanner.hidden = true;
+    if (previewBar) previewBar.hidden = true;
   } else {
     adminPanel.hidden = true;
     studentPanel.hidden = false;
-    if (previewBanner) previewBanner.hidden = true;
+    if (previewBar) previewBar.hidden = true;
   }
 }
 
@@ -84,10 +84,11 @@ function updatePageHeaderForMode() {
   if (!isAdmin) return;
 
   if (adminPreviewMode) {
-    if (pageTitle) pageTitle.textContent = 'My courses (preview)';
-    if (pageDesc) pageDesc.textContent = 'Student view preview — enrollment actions are disabled for admins.';
+    if (pageTitle) pageTitle.textContent = 'My courses';
+    if (pageDesc) pageDesc.textContent =
+      'Select courses from the catalog, then manage them under My selected courses.';
     if (roleBadge) {
-      roleBadge.textContent = 'Preview';
+      roleBadge.textContent = 'Student';
       roleBadge.className = 'badge badge--active';
     }
   } else {
@@ -544,7 +545,6 @@ function renderAvailableCourses() {
       const full = !taken && !codeTaken && left <= 0;
       const overCredit =
         !taken && !codeTaken && !full && currentCredits + (c.credits ?? 0) > maxCredits;
-      const preview = isAdmin && adminPreviewMode;
       return `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
@@ -557,17 +557,15 @@ function renderAvailableCourses() {
       <td><strong>${left}</strong></td>
       <td>
         ${
-          preview
-            ? '<span class="badge badge--completed">Preview</span>'
-            : taken
-              ? '<span class="badge badge--completed">Selected</span>'
-              : codeTaken
-                ? '<span class="badge badge--dropped" title="Same course code already selected in another section">Code taken</span>'
-                : overCredit
-                  ? '<span class="badge badge--dropped" title="Maximum credit limit reached">Max credits</span>'
-                  : full
-                    ? '<span class="badge badge--dropped">Full</span>'
-                    : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
+          taken
+            ? '<span class="badge badge--completed">Selected</span>'
+            : codeTaken
+              ? '<span class="badge badge--dropped" title="Same course code already selected in another section">Code taken</span>'
+              : overCredit
+                ? '<span class="badge badge--dropped" title="Maximum credit limit reached">Max credits</span>'
+                : full
+                  ? '<span class="badge badge--dropped">Full</span>'
+                  : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
         }
       </td>
     </tr>
@@ -640,6 +638,10 @@ function renderMyEnrollments() {
 }
 
 async function handleEnroll(courseId) {
+  if (isAdmin && adminPreviewMode) {
+    showToast('Preview only — students enroll from this screen when signed in.', 'info');
+    return;
+  }
   const { error } = await enrollInCourse(currentUserId, courseId);
   if (error) {
     showToast(mapError(error), 'error');
@@ -746,6 +748,7 @@ export async function initCoursesPage() {
     document.getElementById('btn-exit-preview')?.addEventListener('click', () => setAdminPreviewMode(false));
     await loadAdminCatalog();
   } else {
+    document.getElementById('admin-preview-bar')?.setAttribute('hidden', '');
     if (pageTitle) pageTitle.textContent = 'My courses';
     if (pageDesc) pageDesc.textContent = 'Select courses from the catalog, then manage them under My selected courses.';
     await loadStudentViews();

@@ -37,11 +37,6 @@
         </p>
       </header>
 
-      <div id="admin-preview-banner" class="config-banner config-banner--demo" hidden>
-        Student view preview — admins cannot enroll. Use <strong>Back to admin</strong> to manage the catalog.
-        <button type="button" class="btn btn--ghost btn--sm" id="btn-exit-preview">Back to admin</button>
-      </div>
-
       <!-- Admin: add / edit catalog -->
       <div id="admin-panel" hidden>
         <section class="card">
@@ -154,6 +149,9 @@
 
       <!-- Student: select courses -->
       <div id="student-panel" hidden>
+        <div id="admin-preview-bar" class="admin-preview-bar" hidden>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-exit-preview">← Back to admin</button>
+        </div>
         <section class="card">
           <h2 class="card__title">Available courses</h2>
           <p class="card-hint" id="credit-limit-summary" hidden></p>
