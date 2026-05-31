@@ -127,6 +127,33 @@
     </form>
   </dialog>
 
+  <dialog id="student-enrollments-dialog" class="modal modal--wide">
+    <div class="modal__inner">
+      <h2 class="card__title" id="enrollments-dialog-title">Student courses</h2>
+      <p class="card-hint" id="enrollments-dialog-hint">Remove a course or change to another section.</p>
+      <input type="hidden" id="enrollments-student-id" />
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Section</th>
+              <th>Title</th>
+              <th>Credits</th>
+              <th>Change to</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="student-enrollments-tbody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="student-enrollments-empty" hidden>No courses selected yet.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" id="enrollments-dialog-close">Close</button>
+      </div>
+    </div>
+  </dialog>
+
   <footer class="site-footer"><div class="container"><p data-footer-brand></p></div></footer>
   <script type="module">
     import { initLayout } from './js/main.js';

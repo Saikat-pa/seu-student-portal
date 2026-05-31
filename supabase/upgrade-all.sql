@@ -135,9 +135,6 @@ create policy "avatars_update_own" on storage.objects for update to authenticate
 drop policy if exists "avatars_delete_own" on storage.objects;
 create policy "avatars_delete_own" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- Done
-select 'Student Portal upgrade complete' as status;
-
 -- ─── Course type + prerequisite ───
 alter table public.course_catalog
   add column if not exists course_type text not null default '',
@@ -163,3 +160,22 @@ drop policy if exists "portal_settings_insert_admin" on public.portal_settings;
 create policy "portal_settings_insert_admin"
   on public.portal_settings for insert to authenticated
   with check (public.is_admin());
+
+drop policy if exists "enrollments_delete_own" on public.enrollments;
+create policy "enrollments_delete_own"
+  on public.enrollments for delete to authenticated using (auth.uid() = user_id);
+
+drop policy if exists "enrollments_update_admin" on public.enrollments;
+create policy "enrollments_update_admin"
+  on public.enrollments for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "enrollments_delete_admin" on public.enrollments;
+create policy "enrollments_delete_admin"
+  on public.enrollments for delete to authenticated using (public.is_admin());
+
+-- Refresh API schema cache
+notify pgrst, 'reload schema';
+
+-- Done
+select 'Student Portal upgrade complete' as status;

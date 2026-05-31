@@ -46,6 +46,7 @@
         </ol>
         <div class="form-actions" style="margin-bottom: 0.75rem;">
           <button type="button" class="btn btn--ghost btn--sm" id="btn-load-upgrade">Load upgrade-all.sql</button>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-load-portal-settings">Load portal-settings.sql</button>
           <button type="button" class="btn btn--ghost btn--sm" id="btn-load-install">Load install-once.sql</button>
         </div>
         <textarea id="schema-box" readonly></textarea>
@@ -91,6 +92,7 @@ where id = (select id from auth.users where email = 'YOUR@EMAIL.com');</code></l
         profiles: 'Profiles (batch, photo, CGPA)',
         enrollments: 'Enrollments',
         announcements: 'Notices',
+        portal_settings: 'Credit limits (admin)',
         seat_rpc: 'Seat counter',
       };
       checkList.innerHTML = Object.entries(labels)
@@ -115,6 +117,7 @@ where id = (select id from auth.users where email = 'YOUR@EMAIL.com');</code></l
     });
     document.getElementById('btn-check').addEventListener('click', refreshStatus);
     document.getElementById('btn-load-upgrade').addEventListener('click', () => loadSql('./supabase/upgrade-all.sql'));
+    document.getElementById('btn-load-portal-settings').addEventListener('click', () => loadSql('./supabase/portal-settings.sql'));
     document.getElementById('btn-load-install').addEventListener('click', () => loadSql('./supabase/install-once.sql'));
 
     refreshStatus();

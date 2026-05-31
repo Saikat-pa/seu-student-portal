@@ -36,6 +36,7 @@ allOk = (await probe('profiles (extended)', `${SUPABASE_URL}/rest/v1/profiles?se
 allOk = (await probe('course_catalog (section+seats)', `${SUPABASE_URL}/rest/v1/course_catalog?select=id,section,seat_capacity&limit=1`)) && allOk;
 allOk = (await probe('enrollments', `${SUPABASE_URL}/rest/v1/enrollments?select=id&limit=1`)) && allOk;
 allOk = (await probe('announcements', `${SUPABASE_URL}/rest/v1/announcements?select=id&limit=1`)) && allOk;
+allOk = (await probe('portal_settings', `${SUPABASE_URL}/rest/v1/portal_settings?select=id&limit=1`)) && allOk;
 allOk = (await probe('seat RPC', `${SUPABASE_URL}/rest/v1/rpc/catalog_seat_remaining`, {
   method: 'POST',
   headers: { ...headers, 'Content-Type': 'application/json' },

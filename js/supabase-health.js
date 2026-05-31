@@ -5,6 +5,7 @@ const CHECKS = [
   { key: 'profiles', path: '/rest/v1/profiles?select=id,batch,avatar_url,cgpa&limit=1' },
   { key: 'enrollments', path: '/rest/v1/enrollments?select=id&limit=1' },
   { key: 'announcements', path: '/rest/v1/announcements?select=id&limit=1' },
+  { key: 'portal_settings', path: '/rest/v1/portal_settings?select=id&limit=1' },
 ];
 
 function headers() {

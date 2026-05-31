@@ -372,6 +372,67 @@ export async function dropEnrollment(userId, enrollmentId) {
   return { error };
 }
 
+export async function adminDropEnrollment(userId, enrollmentId) {
+  if (useLocalMode()) {
+    return local.localAdminDropEnrollment(userId, enrollmentId);
+  }
+  const client = getSupabase();
+  const { error } = await client
+    .from('enrollments')
+    .delete()
+    .eq('id', enrollmentId)
+    .eq('user_id', userId);
+  return { error };
+}
+
+export async function adminChangeEnrollmentCourse(userId, enrollmentId, newCourseId) {
+  if (useLocalMode()) {
+    return local.localAdminChangeEnrollmentCourse(userId, enrollmentId, newCourseId);
+  }
+  const client = getSupabase();
+  const { data: row, error: rowErr } = await client
+    .from('enrollments')
+    .select('id, course_id, status')
+    .eq('id', enrollmentId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (rowErr) return { data: null, error: rowErr };
+  if (!row) return { data: null, error: { message: 'Enrollment not found.' } };
+  if (row.course_id === newCourseId) {
+    return fetchEnrollments(userId).then(({ data }) => ({
+      data: (data || []).find((e) => e.id === enrollmentId) || null,
+      error: null,
+    }));
+  }
+
+  const { data: target, error: targetErr } = await client
+    .from('course_catalog')
+    .select('id, code')
+    .eq('id', newCourseId)
+    .maybeSingle();
+  if (targetErr) return { data: null, error: targetErr };
+  if (!target) return { data: null, error: { message: 'Course not found.' } };
+
+  const { data: duplicate, error: dupErr } = await client
+    .from('enrollments')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('course_id', newCourseId)
+    .neq('id', enrollmentId)
+    .maybeSingle();
+  if (dupErr) return { data: null, error: dupErr };
+  if (duplicate) return { data: null, error: { message: 'Student is already in that course section.' } };
+
+  const { data, error } = await client
+    .from('enrollments')
+    .update({ course_id: newCourseId, status: 'enrolled' })
+    .eq('id', enrollmentId)
+    .eq('user_id', userId)
+    .select('*, course_catalog(*)')
+    .single();
+  return { data, error };
+}
+
 export async function updateEnrollmentStatus(userId, enrollmentId, status) {
   if (useLocalMode()) {
     return local.localUpdateEnrollment(userId, enrollmentId, { status });

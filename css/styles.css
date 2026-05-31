@@ -1371,3 +1371,12 @@ textarea {
 .modal__inner {
   padding: 1.25rem 1.5rem;
 }
+
+.modal--wide {
+  max-width: min(920px, 96vw);
+}
+
+.text-muted {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}

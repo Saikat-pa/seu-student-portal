@@ -204,6 +204,13 @@ create policy "enrollments_update_own"
 create policy "enrollments_delete_own"
   on public.enrollments for delete using (auth.uid() = user_id);
 
+create policy "enrollments_update_admin"
+  on public.enrollments for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+create policy "enrollments_delete_admin"
+  on public.enrollments for delete to authenticated using (public.is_admin());
+
 create trigger course_catalog_updated_at
   before update on public.course_catalog
   for each row execute function public.set_updated_at();

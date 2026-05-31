@@ -579,3 +579,33 @@ export async function localUpdateEnrollment(userId, enrollmentId, patch) {
   saveDb(db);
   return { data: attachCourse(db, db.enrollments[idx]), error: null };
 }
+
+export async function localAdminDropEnrollment(userId, enrollmentId) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { error: { message: gate.message } };
+  const db = loadDb();
+  const exists = db.enrollments.some((e) => e.id === enrollmentId && e.user_id === userId);
+  if (!exists) return { error: { message: 'Enrollment not found.' } };
+  db.enrollments = db.enrollments.filter((e) => !(e.id === enrollmentId && e.user_id === userId));
+  saveDb(db);
+  return { error: null };
+}
+
+export async function localAdminChangeEnrollmentCourse(userId, enrollmentId, newCourseId) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { data: null, error: { message: gate.message } };
+  const db = loadDb();
+  const idx = db.enrollments.findIndex((e) => e.id === enrollmentId && e.user_id === userId);
+  if (idx === -1) return { data: null, error: { message: 'Enrollment not found.' } };
+  const course = db.catalog.find((c) => c.id === newCourseId);
+  if (!course) return { data: null, error: { message: 'Course not found.' } };
+  if (db.enrollments.some((e) => e.user_id === userId && e.course_id === newCourseId && e.id !== enrollmentId)) {
+    return { data: null, error: { message: 'Student is already in that course section.' } };
+  }
+  if (userHasActiveCode(db, userId, course.code, enrollmentId)) {
+    return { data: null, error: { message: 'Student already has this course code in another section.' } };
+  }
+  db.enrollments[idx] = { ...db.enrollments[idx], course_id: newCourseId, status: 'enrolled' };
+  saveDb(db);
+  return { data: attachCourse(db, db.enrollments[idx]), error: null };
+}

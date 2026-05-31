@@ -42,6 +42,11 @@
         <section class="card">
           <h2 class="card__title">Enrollment credit limits</h2>
           <p class="card-hint">Student এক semester-এ minimum / maximum কত credit নিতে পারবে সেটা এখানে ঠিক করুন।</p>
+          <p id="limits-setup-notice" class="config-banner config-banner--warn" hidden>
+            Database-এ <code>portal_settings</code> table নেই।
+            <a href="setup.html">Setup</a> page-এ গিয়ে <strong>portal-settings.sql</strong> load করে
+            <a href="https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new" target="_blank" rel="noopener">SQL Editor</a>-এ Run করুন, তারপর page refresh।
+          </p>
           <form id="enrollment-limits-form" class="limits-form" novalidate>
             <div class="form-grid form-grid--compact">
               <div class="form-group">

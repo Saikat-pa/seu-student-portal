@@ -1,5 +1,12 @@
 import { requireAdmin, getUserProfile } from './auth.js';
-import { fetchStudentProfiles, updateProfile } from './api.js';
+import {
+  fetchStudentProfiles,
+  updateProfile,
+  fetchEnrollments,
+  fetchCatalog,
+  adminDropEnrollment,
+  adminChangeEnrollmentCourse,
+} from './api.js';
 import {
   avatarInitials,
   formatCgpa,
@@ -7,10 +14,13 @@ import {
   validateAdminProfilePatch,
 } from './profile-utils.js';
 import { bindFilterForm, fillSelect } from './catalog-filters.js';
-import { escapeHtml, showToast, setFieldError, clearFieldError } from './utils.js';
+import { escapeHtml, showToast, setFieldError, clearFieldError, formatCourseLabel } from './utils.js';
 
 let studentsCache = [];
 let listFilters = { search: '', department: '', batch: '' };
+let catalogCache = [];
+let enrollmentsStudentId = null;
+let enrollmentsCache = [];
 
 function readStudentListFilters(root) {
   return {
@@ -46,6 +56,148 @@ function avatarCell(profile) {
     return `<img class="avatar avatar--sm" src="${escapeHtml(profile.avatarUrl)}" alt="" />`;
   }
   return `<div class="avatar avatar--sm avatar--placeholder">${escapeHtml(avatarInitials(profile.fullName))}</div>`;
+}
+
+function courseChangeOptions(enrollment, studentEnrollments) {
+  const currentId = enrollment.course_id;
+  const takenCourseIds = new Set(studentEnrollments.map((e) => e.course_id));
+  const takenCodes = new Set(
+    studentEnrollments
+      .filter((e) => e.id !== enrollment.id && ['enrolled', 'completed'].includes(e.status))
+      .map((e) => e.course_catalog?.code?.toUpperCase())
+      .filter(Boolean)
+  );
+
+  const options = catalogCache
+    .filter((c) => c.id !== currentId && !takenCourseIds.has(c.id))
+    .filter((c) => !takenCodes.has(c.code?.toUpperCase()))
+    .sort((a, b) => `${a.code}${a.section}`.localeCompare(`${b.code}${b.section}`))
+    .map((c) => {
+      const label = `${c.code} · ${c.section} — ${c.title}${c.is_active ? '' : ' (closed)'}`;
+      return `<option value="${c.id}">${escapeHtml(label)}</option>`;
+    });
+
+  if (!options.length) {
+    return '<option value="">No other section available</option>';
+  }
+  return `<option value="">Choose course…</option>${options.join('')}`;
+}
+
+function renderEnrollmentsDialog() {
+  const tbody = document.getElementById('student-enrollments-tbody');
+  const empty = document.getElementById('student-enrollments-empty');
+  if (!tbody) return;
+
+  if (!enrollmentsCache.length) {
+    tbody.innerHTML = '';
+    if (empty) empty.hidden = false;
+    return;
+  }
+  if (empty) empty.hidden = true;
+
+  tbody.innerHTML = enrollmentsCache
+    .map((e) => {
+      const c = e.course_catalog || {};
+      return `
+    <tr>
+      <td><strong>${escapeHtml(c.code || '—')}</strong></td>
+      <td>${escapeHtml(c.section || '—')}</td>
+      <td>${escapeHtml(c.title || '—')}</td>
+      <td>${c.credits ?? '—'}</td>
+      <td>
+        <select class="enrollment-change-select" data-id="${e.id}" aria-label="Change ${escapeHtml(formatCourseLabel(c))}">
+          ${courseChangeOptions(e, enrollmentsCache)}
+        </select>
+      </td>
+      <td class="table-actions">
+        <button type="button" class="btn btn--danger btn--sm btn-remove-enrollment" data-id="${e.id}">Remove</button>
+      </td>
+    </tr>
+  `;
+    })
+    .join('');
+
+  tbody.querySelectorAll('.btn-remove-enrollment').forEach((btn) => {
+    btn.addEventListener('click', () => handleRemoveEnrollment(btn.dataset.id));
+  });
+
+  tbody.querySelectorAll('.enrollment-change-select').forEach((sel) => {
+    sel.addEventListener('change', () => handleChangeEnrollment(sel.dataset.id, sel.value, sel));
+  });
+}
+
+async function openEnrollmentsDialog(studentId) {
+  const student = studentsCache.find((s) => s.id === studentId);
+  if (!student) return;
+
+  enrollmentsStudentId = studentId;
+  const dialog = document.getElementById('student-enrollments-dialog');
+  const title = document.getElementById('enrollments-dialog-title');
+  if (title) title.textContent = `Courses — ${student.fullName || 'Student'}`;
+  document.getElementById('enrollments-student-id').value = studentId;
+
+  if (!catalogCache.length) {
+    const { data, error } = await fetchCatalog();
+    if (error) {
+      showToast(error.message || 'Could not load course catalog.', 'error');
+      return;
+    }
+    catalogCache = data || [];
+  }
+
+  const { data, error } = await fetchEnrollments(studentId);
+  if (error) {
+    showToast(error.message || 'Could not load enrollments.', 'error');
+    return;
+  }
+  enrollmentsCache = (data || []).filter((e) => ['enrolled', 'completed'].includes(e.status));
+  renderEnrollmentsDialog();
+  dialog?.showModal();
+}
+
+async function handleRemoveEnrollment(enrollmentId) {
+  if (!enrollmentsStudentId) return;
+  const row = enrollmentsCache.find((e) => e.id === enrollmentId);
+  const label = formatCourseLabel(row?.course_catalog) || 'this course';
+  if (!window.confirm(`Remove ${label} from this student?`)) return;
+
+  const { error } = await adminDropEnrollment(enrollmentsStudentId, enrollmentId);
+  if (error) {
+    showToast(error.message || 'Could not remove course.', 'error');
+    return;
+  }
+  showToast('Course removed.', 'success');
+  enrollmentsCache = enrollmentsCache.filter((e) => e.id !== enrollmentId);
+  renderEnrollmentsDialog();
+}
+
+async function handleChangeEnrollment(enrollmentId, newCourseId, selectEl) {
+  if (!enrollmentsStudentId || !newCourseId) {
+    if (selectEl) selectEl.value = '';
+    return;
+  }
+  const row = enrollmentsCache.find((e) => e.id === enrollmentId);
+  const target = catalogCache.find((c) => c.id === newCourseId);
+  const fromLabel = formatCourseLabel(row?.course_catalog) || 'course';
+  const toLabel = formatCourseLabel(target) || 'new course';
+  if (!window.confirm(`Change ${fromLabel} to ${toLabel}?`)) {
+    if (selectEl) selectEl.value = '';
+    return;
+  }
+
+  const { data, error } = await adminChangeEnrollmentCourse(
+    enrollmentsStudentId,
+    enrollmentId,
+    newCourseId
+  );
+  if (error) {
+    showToast(error.message || 'Could not change course.', 'error');
+    if (selectEl) selectEl.value = '';
+    return;
+  }
+  showToast('Course changed.', 'success');
+  enrollmentsCache = enrollmentsCache.map((e) => (e.id === enrollmentId ? data || e : e));
+  renderEnrollmentsDialog();
 }
 
 function renderTable() {
@@ -89,6 +241,7 @@ function renderTable() {
       <td>${formatCgpa(s.cgpa)}</td>
       <td class="table-actions">
         <button type="button" class="btn btn--ghost btn--sm btn-edit-student" data-id="${s.id}">Edit</button>
+        <button type="button" class="btn btn--ghost btn--sm btn-student-courses" data-id="${s.id}">Courses</button>
       </td>
     </tr>
   `
@@ -97,6 +250,9 @@ function renderTable() {
 
   tbody.querySelectorAll('.btn-edit-student').forEach((btn) => {
     btn.addEventListener('click', () => openEditDialog(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.btn-student-courses').forEach((btn) => {
+    btn.addEventListener('click', () => openEnrollmentsDialog(btn.dataset.id));
   });
 }
 
@@ -173,6 +329,12 @@ function bindEditForm() {
   });
 }
 
+function bindEnrollmentsDialog() {
+  document.getElementById('enrollments-dialog-close')?.addEventListener('click', () => {
+    document.getElementById('student-enrollments-dialog')?.close();
+  });
+}
+
 export async function initStudentsPage() {
   const session = await requireAdmin();
   if (!session) return;
@@ -186,5 +348,6 @@ export async function initStudentsPage() {
   });
 
   bindEditForm();
+  bindEnrollmentsDialog();
   await loadStudents();
 }

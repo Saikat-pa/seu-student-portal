@@ -13,7 +13,6 @@ import {
   fetchEnrollments,
   enrollInCourse,
   dropEnrollment,
-  updateEnrollmentStatus,
 } from './api.js';
 import {
   showToast,
@@ -117,6 +116,14 @@ function updateFilterCount(root, shown, total) {
   if (el) el.textContent = total ? `Showing ${shown} of ${total}` : '';
 }
 
+function enrollmentStatusBadge(status) {
+  const cls =
+    status === 'completed' ? 'completed' : status === 'dropped' ? 'dropped' : 'active';
+  const label =
+    status === 'completed' ? 'Completed' : status === 'dropped' ? 'Dropped' : 'Enrolled';
+  return `<span class="badge badge--${cls}">${label}</span>`;
+}
+
 function refreshCatalogFilterOptions(root) {
   if (!root) return;
   const opts = catalogFilterOptions(catalogCache);
@@ -189,6 +196,9 @@ function mapError(error) {
   if (/maximum \d+ credits/i.test(msg) || /minimum \d+ credits/i.test(msg)) {
     return msg;
   }
+  if (/portal_settings|schema cache/i.test(msg)) {
+    return 'Credit limits table missing. Open setup.html → Load portal-settings.sql → Run in Supabase SQL Editor.';
+  }
   return msg;
 }
 
@@ -227,11 +237,17 @@ function applyValidationErrors(form, errors) {
 /* ——— Admin: enrollment credit limits ——— */
 
 async function loadEnrollmentLimits() {
+  const notice = document.getElementById('limits-setup-notice');
   const { data, error } = await fetchEnrollmentLimits();
   if (error) {
-    showToast(mapError(error), 'error');
+    const msg = mapError(error);
+    if (notice && /portal_settings|schema cache|Credit limits table/i.test(msg || '')) {
+      notice.hidden = false;
+    }
+    showToast(msg, 'error');
     return;
   }
+  if (notice) notice.hidden = true;
   enrollmentLimits = data || { ...DEFAULT_ENROLLMENT_LIMITS };
 }
 
@@ -607,21 +623,20 @@ function renderMyEnrollments() {
   tbody.innerHTML = filtered
     .map((e) => {
       const c = e.course_catalog || {};
+      const canDrop = ['enrolled', 'completed'].includes(e.status);
       return `
     <tr>
       <td><strong>${escapeHtml(c.code || '—')}</strong></td>
       <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title || '—')}</td>
       <td>${c.credits ?? '—'}</td>
-      <td>
-        <select class="enrollment-status" data-id="${e.id}" aria-label="Status for ${escapeHtml(formatCourseLabel(c))}">
-          <option value="enrolled" ${e.status === 'enrolled' ? 'selected' : ''}>Enrolled</option>
-          <option value="completed" ${e.status === 'completed' ? 'selected' : ''}>Completed</option>
-          <option value="dropped" ${e.status === 'dropped' ? 'selected' : ''}>Dropped</option>
-        </select>
-      </td>
+      <td>${enrollmentStatusBadge(e.status)}</td>
       <td class="table-actions">
-        <button type="button" class="btn btn--danger btn--sm btn-drop" data-id="${e.id}">Drop</button>
+        ${
+          canDrop
+            ? `<button type="button" class="btn btn--danger btn--sm btn-drop" data-id="${e.id}">Drop</button>`
+            : '<span class="text-muted">—</span>'
+        }
       </td>
     </tr>
   `;
@@ -630,10 +645,6 @@ function renderMyEnrollments() {
 
   tbody.querySelectorAll('.btn-drop').forEach((btn) => {
     btn.addEventListener('click', () => handleDrop(btn.dataset.id));
-  });
-
-  tbody.querySelectorAll('.enrollment-status').forEach((sel) => {
-    sel.addEventListener('change', () => handleStatusChange(sel.dataset.id, sel.value));
   });
 }
 
@@ -652,6 +663,10 @@ async function handleEnroll(courseId) {
 }
 
 async function handleDrop(enrollmentId) {
+  if (isAdmin && adminPreviewMode) {
+    showToast('Preview only — students drop courses from this screen when signed in.', 'info');
+    return;
+  }
   const row = enrollmentsCache.find((e) => e.id === enrollmentId);
   const c = row?.course_catalog;
   if (!window.confirm(`Drop ${formatCourseLabel(c) || 'this course'}?`)) return;
@@ -662,16 +677,6 @@ async function handleDrop(enrollmentId) {
     return;
   }
   showToast('Course dropped.', 'success');
-  await loadStudentViews();
-}
-
-async function handleStatusChange(enrollmentId, status) {
-  const { error } = await updateEnrollmentStatus(currentUserId, enrollmentId, status);
-  if (error) {
-    showToast(mapError(error), 'error');
-    return;
-  }
-  showToast('Status updated.', 'success');
   await loadStudentViews();
 }
 
