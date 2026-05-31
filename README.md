@@ -10,13 +10,10 @@ After GitHub Pages is enabled, the site is published at:
 
 **Demo login (no Supabase):** `demo@student.local` / `demo12345`
 
-## Supabase (optional)
+## Supabase
 
-To use a live backend on GitHub Pages, add these repository **Secrets** (`Settings → Secrets → Actions`):
+GitHub Pages uses `js/config.public.js` automatically (no Secrets required). Optional overrides: repository **Secrets** `SUPABASE_URL` and `SUPABASE_ANON_KEY` (`Settings → Secrets → Actions`).
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
+Run `supabase/install-once.sql` once in the [SQL Editor](https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new).
 
-Then re-run the **Deploy GitHub Pages** workflow or push to `main`.
-
-Local setup: copy `js/config.example.js` to `js/config.js` and run `npm start`.
+Local setup: copy `js/config.example.js` to `js/config.js` and run `npm start`. Verify with `npm run check`.
