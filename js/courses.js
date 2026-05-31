@@ -7,6 +7,7 @@ import {
   updateCatalog,
   deleteCatalog,
   importCseCurriculum,
+  openAllCatalogCourses,
   fetchEnrollments,
   enrollInCourse,
   dropEnrollment,
@@ -43,6 +44,63 @@ let isAdmin = false;
 let seatMap = {};
 let catalogFilters = defaultCatalogFilters();
 let enrollmentFilters = defaultEnrollmentFilters();
+let adminPreviewMode = false;
+
+function syncCoursePanels() {
+  const adminPanel = document.getElementById('admin-panel');
+  const studentPanel = document.getElementById('student-panel');
+  const previewBanner = document.getElementById('admin-preview-banner');
+  if (!adminPanel || !studentPanel) return;
+
+  if (isAdmin && adminPreviewMode) {
+    adminPanel.hidden = true;
+    studentPanel.hidden = false;
+    if (previewBanner) previewBanner.hidden = false;
+  } else if (isAdmin) {
+    adminPanel.hidden = false;
+    studentPanel.hidden = true;
+    if (previewBanner) previewBanner.hidden = true;
+  } else {
+    adminPanel.hidden = true;
+    studentPanel.hidden = false;
+    if (previewBanner) previewBanner.hidden = true;
+  }
+}
+
+function updatePageHeaderForMode() {
+  const pageTitle = document.getElementById('page-title');
+  const pageDesc = document.getElementById('page-desc');
+  const roleBadge = document.getElementById('role-badge');
+
+  if (!isAdmin) return;
+
+  if (adminPreviewMode) {
+    if (pageTitle) pageTitle.textContent = 'My courses (preview)';
+    if (pageDesc) pageDesc.textContent = 'Student view preview — enrollment actions are disabled for admins.';
+    if (roleBadge) {
+      roleBadge.textContent = 'Preview';
+      roleBadge.className = 'badge badge--active';
+    }
+  } else {
+    if (pageTitle) pageTitle.textContent = 'Course catalog (Admin)';
+    if (pageDesc) pageDesc.textContent = 'Add courses below — students will see them in Available courses.';
+    if (roleBadge) {
+      roleBadge.textContent = 'Admin';
+      roleBadge.className = 'badge badge--completed';
+    }
+  }
+}
+
+async function setAdminPreviewMode(on) {
+  adminPreviewMode = on;
+  syncCoursePanels();
+  updatePageHeaderForMode();
+  if (on) {
+    await loadStudentViews();
+  } else {
+    await loadAdminCatalog();
+  }
+}
 
 function updateFilterCount(root, shown, total) {
   const el = root?.querySelector('[data-filter-count]');
@@ -412,6 +470,7 @@ function renderAvailableCourses() {
       const codeTaken = !taken && enrolledCodes.has((c.code || '').toUpperCase());
       const left = seatMap[c.id]?.remaining ?? c.seat_capacity ?? 0;
       const full = !taken && !codeTaken && left <= 0;
+      const preview = isAdmin && adminPreviewMode;
       return `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
@@ -424,13 +483,15 @@ function renderAvailableCourses() {
       <td><strong>${left}</strong></td>
       <td>
         ${
-          taken
-            ? '<span class="badge badge--completed">Selected</span>'
-            : codeTaken
-              ? '<span class="badge badge--dropped" title="Same course code already selected in another section">Code taken</span>'
-              : full
-                ? '<span class="badge badge--dropped">Full</span>'
-                : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
+          preview
+            ? '<span class="badge badge--completed">Preview</span>'
+            : taken
+              ? '<span class="badge badge--completed">Selected</span>'
+              : codeTaken
+                ? '<span class="badge badge--dropped" title="Same course code already selected in another section">Code taken</span>'
+                : full
+                  ? '<span class="badge badge--dropped">Full</span>'
+                  : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
         }
       </td>
     </tr>
@@ -536,6 +597,26 @@ async function handleStatusChange(enrollmentId, status) {
   await loadStudentViews();
 }
 
+async function handleOpenAllCourses() {
+  const closed = catalogCache.filter((c) => !c.is_active).length;
+  if (!closed) {
+    showToast('All courses are already open.', 'info');
+    return;
+  }
+  if (!window.confirm(`Open all ${closed} closed course(s) for student selection?`)) return;
+
+  const btn = document.getElementById('btn-open-all');
+  if (btn) btn.disabled = true;
+  const { updated, error } = await openAllCatalogCourses();
+  if (btn) btn.disabled = false;
+  if (error) {
+    showToast(mapError(error), 'error');
+    return;
+  }
+  showToast(`Opened ${updated} course(s) for students.`, 'success');
+  await loadAdminCatalog();
+}
+
 async function handleImportCurriculum() {
   if (
     !window.confirm(
@@ -579,10 +660,13 @@ export async function initCoursesPage() {
   document.getElementById('student-panel').hidden = isAdmin;
 
   if (isAdmin) {
-    if (pageTitle) pageTitle.textContent = 'Course catalog (Admin)';
-    if (pageDesc) pageDesc.textContent = 'Add courses below — students will see them in Available courses.';
+    syncCoursePanels();
+    updatePageHeaderForMode();
     bindAdminForm();
     document.getElementById('btn-import-curriculum')?.addEventListener('click', handleImportCurriculum);
+    document.getElementById('btn-open-all')?.addEventListener('click', handleOpenAllCourses);
+    document.getElementById('btn-preview-student')?.addEventListener('click', () => setAdminPreviewMode(true));
+    document.getElementById('btn-exit-preview')?.addEventListener('click', () => setAdminPreviewMode(false));
     await loadAdminCatalog();
   } else {
     if (pageTitle) pageTitle.textContent = 'My courses';

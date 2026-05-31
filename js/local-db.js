@@ -410,6 +410,23 @@ export async function localInsertCatalog(course) {
   return { data: row, error: null };
 }
 
+export async function localOpenAllCatalog() {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { updated: 0, error: { message: gate.message } };
+  const db = loadDb();
+  const now = new Date().toISOString();
+  let updated = 0;
+  for (const course of db.catalog) {
+    if (!course.is_active) {
+      course.is_active = true;
+      course.updated_at = now;
+      updated++;
+    }
+  }
+  saveDb(db);
+  return { updated, error: null };
+}
+
 export async function localUpdateCatalog(id, course) {
   const gate = await requireAdminUser();
   if (!gate.ok) return { error: { message: gate.message } };

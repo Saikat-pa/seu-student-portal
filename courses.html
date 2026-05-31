@@ -37,6 +37,11 @@
         </p>
       </header>
 
+      <div id="admin-preview-banner" class="config-banner config-banner--demo" hidden>
+        Student view preview — admins cannot enroll. Use <strong>Back to admin</strong> to manage the catalog.
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-exit-preview">Back to admin</button>
+      </div>
+
       <!-- Admin: add / edit catalog -->
       <div id="admin-panel" hidden>
         <section class="card">
@@ -93,7 +98,11 @@
         <section class="card">
           <div class="card__header-row">
             <h2 class="card__title">Course catalog</h2>
-            <button type="button" class="btn btn--ghost btn--sm" id="btn-import-curriculum">Import CSE curriculum</button>
+            <div class="admin-toolbar">
+              <button type="button" class="btn btn--primary btn--sm" id="btn-open-all">Open all courses</button>
+              <button type="button" class="btn btn--ghost btn--sm" id="btn-preview-student">Preview student view</button>
+              <button type="button" class="btn btn--ghost btn--sm" id="btn-import-curriculum">Import CSE curriculum</button>
+            </div>
           </div>
           <div id="admin-catalog-filters"></div>
           <div class="table-wrap">

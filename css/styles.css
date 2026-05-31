@@ -664,6 +664,25 @@ img {
   margin: 0;
 }
 
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+#admin-preview-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+#admin-preview-banner:not([hidden]) {
+  display: flex;
+}
+
 /* Stats */
 .stats-grid {
   display: grid;
