@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courses — SEU Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="layout">
+  <div id="config-banner" class="config-banner" hidden></div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav class="nav nav--collapsible" id="main-nav" aria-label="Main">
+        <a href="index.html" class="nav-link" data-page="index.html">Home</a>
+        <a href="about.html" class="nav-link" data-page="about.html">About</a>
+        <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <header class="page-header">
+        <h1 id="page-title">Courses</h1>
+        <p id="page-desc">
+          Signed in as <strong id="page-user">User</strong>
+          <span id="role-badge" class="badge badge--active">Student</span>
+          · <span id="course-count">0</span> item(s)
+        </p>
+      </header>
+
+      <!-- Admin: catalog CRUD -->
+      <div id="admin-panel" hidden>
+        <section class="card">
+          <h2 class="card__title" id="form-heading">Add course to catalog</h2>
+          <form id="admin-course-form" novalidate>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="course-title">Course title</label>
+                <input type="text" id="course-title" name="title" maxlength="120" required />
+              </div>
+              <div class="form-group">
+                <label for="course-code">Course code</label>
+                <input type="text" id="course-code" name="code" maxlength="10" placeholder="CS101" required />
+              </div>
+              <div class="form-group">
+                <label for="course-credits">Credits</label>
+                <input type="number" id="course-credits" name="credits" min="1" max="12" value="3" required />
+              </div>
+              <div class="form-group">
+                <label for="course-instructor">Instructor</label>
+                <input type="text" id="course-instructor" name="instructor" maxlength="80" required />
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="course-active" name="is_active" checked />
+                  Open for student selection
+                </label>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary">Add course</button>
+              <button type="button" class="btn btn--ghost" id="btn-cancel-edit" hidden>Cancel edit</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2 class="card__title">Course catalog</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Title</th>
+                  <th>Credits</th>
+                  <th>Instructor</th>
+                  <th>Open</th>
+                  <th>Added</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-catalog-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="admin-catalog-empty" hidden>No courses in catalog yet.</p>
+        </section>
+      </div>
+
+      <!-- Student: select only -->
+      <div id="student-panel" hidden>
+        <section class="card">
+          <h2 class="card__title">Available courses</h2>
+          <p class="card-hint">Choose courses offered by the school. You cannot add new courses yourself.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Title</th>
+                  <th>Credits</th>
+                  <th>Instructor</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="available-courses-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="available-empty" hidden>No open courses right now. Check back later.</p>
+        </section>
+
+        <section class="card">
+          <h2 class="card__title">My selected courses</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Title</th>
+                  <th>Credits</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="enrollments-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="enrollments-empty" hidden>You have not selected any courses yet.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p data-footer-brand></p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    import { initCoursesPage } from './js/courses.js';
+    initLayout();
+    initCoursesPage();
+  </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — SEU Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="layout">
+  <div id="config-banner" class="config-banner" hidden>
+    Set your Supabase URL and anon key in <a href="js/config.js">js/config.js</a>.
+  </div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav class="nav nav--collapsible" id="main-nav" aria-label="Main">
+        <a href="index.html" class="nav-link" data-page="index.html">Home</a>
+        <a href="about.html" class="nav-link" data-page="about.html">About</a>
+        <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container auth-layout">
+      <header class="page-header" style="text-align: center;">
+        <h1>Welcome back</h1>
+        <p>Sign in or create an account to access your dashboard and courses.</p>
+      </header>
+
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tabs__btn tabs__btn--active" data-tab="login" role="tab" aria-selected="true">Sign in</button>
+          <button type="button" class="tabs__btn" data-tab="register" role="tab" aria-selected="false">Register</button>
+        </div>
+
+        <p id="supabase-hint" class="demo-hint" hidden style="border: 1px solid var(--color-accent);">
+          Supabase চালু আছে — <strong>admin@student.local</strong> এখানে কাজ করবে না।<br />
+          <strong>Register</strong> ট্যাবে আপনার <strong>আসল Gmail/ইমেইল</strong> দিয়ে অ্যাকাউন্ট বানান, তারপর Sign in করুন।<br />
+          Admin চাইলে Supabase SQL-এ role = admin সেট করুন।<br />
+          <strong>Email rate limit?</strong> Authentication → Confirm email <strong>OFF</strong> করুন।
+        </p>
+        <p id="demo-hint" class="demo-hint" hidden>
+          <strong>Admin:</strong> admin@student.local / admin12345<br />
+          <strong>Student:</strong> demo@student.local / demo12345
+        </p>
+        <p id="protocol-warn" class="demo-hint" hidden style="border: 1px solid var(--color-danger); color: var(--color-danger);">
+          সাইট সরাসরি ফাইল খোলা হয়েছে। টার্মিনালে <code>npm start</code> চালিয়ে <code>http://localhost</code> লিংক ব্যবহার করুন।
+        </p>
+
+        <div data-panel="login" role="tabpanel">
+          <form id="login-form" novalidate>
+            <div class="form-group form-group--full">
+              <label for="login-email">Email</label>
+              <input type="email" id="login-email" name="email" autocomplete="email" required />
+            </div>
+            <div class="form-group form-group--full">
+              <label for="login-password">Password</label>
+              <input type="password" id="login-password" name="password" autocomplete="current-password" required minlength="8" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary" style="width: 100%;">Sign in</button>
+            </div>
+          </form>
+        </div>
+
+        <div data-panel="register" role="tabpanel" hidden>
+          <form id="register-form" novalidate>
+            <div class="form-group form-group--full">
+              <label for="reg-name">Full name</label>
+              <input type="text" id="reg-name" name="fullName" autocomplete="name" required />
+            </div>
+            <div class="form-group form-group--full">
+              <label for="reg-email">Email</label>
+              <input type="email" id="reg-email" name="email" autocomplete="email" required />
+            </div>
+            <div class="form-group form-group--full">
+              <label for="reg-password">Password</label>
+              <input type="password" id="reg-password" name="password" autocomplete="new-password" required minlength="8" />
+            </div>
+            <div class="form-group form-group--full">
+              <label for="reg-confirm">Confirm password</label>
+              <input type="password" id="reg-confirm" name="confirmPassword" autocomplete="new-password" required minlength="8" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary" style="width: 100%;">Create account</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p data-footer-brand></p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    import { initAuthTabs, bindLoginForm, bindRegisterForm } from './js/auth.js';
+
+    if (window.location.protocol === 'file:') {
+      document.getElementById('protocol-warn').hidden = false;
+    }
+
+    initLayout();
+    initAuthTabs();
+    bindLoginForm();
+    bindRegisterForm();
+  </script>
+</body>
+</html>

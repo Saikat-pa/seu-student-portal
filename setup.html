@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supabase setup — Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .setup-steps { color: var(--color-muted); margin: 0 0 1rem; padding-left: 1.25rem; }
+    .setup-steps li { margin-bottom: 0.5rem; }
+    #schema-box {
+      width: 100%;
+      min-height: 280px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+    }
+    .status-ok { color: var(--color-success); }
+    .status-bad { color: var(--color-danger); }
+  </style>
+</head>
+<body class="layout">
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container" style="max-width: 800px;">
+      <header class="page-header">
+        <h1>Supabase setup</h1>
+        <p id="status-line">Checking connection…</p>
+      </header>
+
+      <section class="card">
+        <h2 class="card__title">আপনার একমাত্র কাজ (১ মিনিট)</h2>
+        <ol class="setup-steps">
+          <li>নিচের <strong>Copy SQL</strong> চাপুন</li>
+          <li><a href="https://supabase.com/dashboard/project/vhoamzowtnwscfwirpvq/sql/new" target="_blank" rel="noopener">Supabase SQL Editor</a> খুলুন</li>
+          <li>Paste করুন → <strong>Run</strong></li>
+          <li>এই পেজে <strong>Check again</strong> চাপুন</li>
+        </ol>
+        <textarea id="schema-box" readonly></textarea>
+        <div class="form-actions">
+          <button type="button" class="btn btn--primary" id="btn-copy">Copy SQL</button>
+          <button type="button" class="btn btn--ghost" id="btn-check">Check again</button>
+          <a href="login.html" class="btn btn--ghost">Go to login</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    import { checkSupabaseReady } from './js/supabase-health.js';
+
+    initLayout();
+
+    const statusLine = document.getElementById('status-line');
+    const box = document.getElementById('schema-box');
+
+    const res = await fetch('./supabase/schema.sql');
+    box.value = await res.text();
+
+    async function refreshStatus() {
+      const s = await checkSupabaseReady();
+      if (s.ok) {
+        statusLine.innerHTML = '<span class="status-ok">✓ Supabase ready — course_catalog exists.</span>';
+      } else if (s.message === 'missing_table') {
+        statusLine.innerHTML = '<span class="status-bad">✗ course_catalog not found — run migration + schema SQL below.</span>';
+      } else {
+        statusLine.textContent = 'Check config.js or network.';
+      }
+    }
+
+    document.getElementById('btn-copy').addEventListener('click', async () => {
+      await navigator.clipboard.writeText(box.value);
+      document.getElementById('btn-copy').textContent = 'Copied!';
+      setTimeout(() => { document.getElementById('btn-copy').textContent = 'Copy SQL'; }, 2000);
+    });
+
+    document.getElementById('btn-check').addEventListener('click', refreshStatus);
+    refreshStatus();
+  </script>
+</body>
+</html>

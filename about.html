@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="About Southeast University (SEU) and the official student portal." />
+  <title>About SEU — Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="layout">
+  <div id="config-banner" class="config-banner" hidden></div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav class="nav nav--collapsible" id="main-nav" aria-label="Main">
+        <a href="index.html" class="nav-link" data-page="index.html">Home</a>
+        <a href="about.html" class="nav-link" data-page="about.html">About</a>
+        <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="about-hero">
+      <div class="about-hero__media">
+        <img src="assets/seu-campus.jpg" alt="Southeast University campus" class="about-hero__img" />
+        <div class="about-hero__overlay"></div>
+      </div>
+      <div class="container about-hero__content">
+        <img src="assets/seu-logo.png" alt="Southeast University" class="about-hero__logo seu-logo" height="56" />
+        <h1>Southeast University</h1>
+        <p class="about-hero__motto">Meeting the challenges of Time</p>
+        <p class="about-hero__tagline">A rapidly growing private university in Bangladesh, committed to affordable, world-class education.</p>
+      </div>
+    </section>
+
+    <div class="container about-body">
+      <div class="about-grid">
+        <article class="card">
+          <h2 class="card__title">About the university</h2>
+          <p class="about-text">
+            <strong>Southeast University (SEU)</strong>, established in 2002, offers undergraduate and postgraduate
+            programs across engineering, business, arts &amp; social sciences, law, science, and information technology.
+            The campus at <strong>Tejgaon, Dhaka</strong> blends quiet surroundings with an active student community
+            focused on knowledge and creative discussion.
+          </p>
+          <p class="about-text">
+            SEU aspires to provide excellent modern education and equip students with the skills to lead Bangladesh’s
+            development — through practical learning, research, and ethical, hardworking graduates.
+          </p>
+          <ul class="about-facts">
+            <li><span>Campus</span> 251/A &amp; 252, Tejgaon Industrial Area, Dhaka 1208</li>
+            <li><span>Admission hotline</span> 01766348518, 01632261081 (9:00 am – 8:00 pm)</li>
+            <li><span>Official site</span> <a href="https://seu.edu.bd/" target="_blank" rel="noopener">seu.edu.bd</a></li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2 class="card__title">Schools &amp; programs</h2>
+          <ul class="school-list">
+            <li><strong>School of Engineering (SE)</strong> — CSE, EEE, Textile, Architecture</li>
+            <li><strong>School of Business Studies (SBS)</strong> — BBA, MBA, EMBA</li>
+            <li><strong>School of Arts &amp; Social Sciences (SASS)</strong> — Economics, English, Bangla</li>
+            <li><strong>School of Law (SL)</strong> — LLB, LLM</li>
+            <li><strong>School of Science (SS)</strong> — Pharmacy</li>
+            <li><strong>School of Information Technology (SIT)</strong> — ICT programs</li>
+          </ul>
+        </article>
+      </div>
+
+      <article class="card">
+        <h2 class="card__title">About this student portal</h2>
+        <p class="about-text">
+          This portal helps SEU students and administrators manage coursework online. Administrators maintain the
+          official <strong>course catalog</strong>; students <strong>select courses</strong> from that list — they cannot
+          create their own entries. Your data is protected with authentication and database-level access control.
+        </p>
+        <div class="about-links">
+          <a href="https://seu.edu.bd/" target="_blank" rel="noopener" class="quick-link">
+            <strong>SEU official website</strong>
+            <span>News, programs, and campus life</span>
+          </a>
+          <a href="https://admission.seu.edu.bd/" target="_blank" rel="noopener" class="quick-link">
+            <strong>Online admission</strong>
+            <span>Apply for upcoming semesters</span>
+          </a>
+          <a href="https://ums.seu.edu.bd/" target="_blank" rel="noopener" class="quick-link">
+            <strong>University Management System</strong>
+            <span>UMS for academic records</span>
+          </a>
+        </div>
+      </article>
+
+      <p class="about-cta">
+        <a href="login.html" class="btn btn--primary btn--lg">Sign in to the portal</a>
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p data-footer-brand></p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    initLayout();
+  </script>
+</body>
+</html>

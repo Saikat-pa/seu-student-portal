@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SEU Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="layout">
+  <div id="config-banner" class="config-banner" hidden>
+    Set your Supabase URL and anon key in <a href="js/config.js">js/config.js</a>.
+  </div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav class="nav nav--collapsible" id="main-nav" aria-label="Main">
+        <a href="index.html" class="nav-link" data-page="index.html">Home</a>
+        <a href="about.html" class="nav-link" data-page="about.html">About</a>
+        <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <header class="page-header">
+        <h1>Dashboard</h1>
+        <p>Hello, <strong id="dashboard-name">Student</strong> · <span id="dashboard-email"></span> · <span id="dashboard-role" class="badge badge--active">Student</span></p>
+      </header>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-card__value" id="stat-total">0</span>
+          <span class="stat-card__label" id="stat-label-total">Total courses</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__value" id="stat-active">0</span>
+          <span class="stat-card__label" id="stat-label-active">Active</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__value" id="stat-completed">0</span>
+          <span class="stat-card__label" id="stat-label-completed">Completed</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__value" id="stat-credits">0</span>
+          <span class="stat-card__label" id="stat-label-credits">Active credits</span>
+        </div>
+      </div>
+
+      <div class="quick-links">
+        <a href="courses.html" class="quick-link">
+          <strong>Manage courses</strong>
+          <span>Add, edit, or remove your enrolled courses</span>
+        </a>
+        <a href="login.html" class="quick-link">
+          <strong>Account settings</strong>
+          <span>Sign out or switch accounts from the header</span>
+        </a>
+      </div>
+
+      <section class="card" style="margin-top: 1.5rem;">
+        <h2 class="card__title" id="recent-title">Recent courses</h2>
+        <ul class="recent-list" id="recent-courses"></ul>
+        <p class="empty-state" id="recent-empty" hidden>No courses yet. <a href="courses.html">Add your first course</a>.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p data-footer-brand></p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    import { initDashboardPage } from './js/dashboard.js';
+
+    initLayout();
+    initDashboardPage();
+  </script>
+</body>
+</html>
