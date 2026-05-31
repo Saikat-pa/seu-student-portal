@@ -50,16 +50,20 @@ export function initNavAuth() {
   if (!navAuth) return;
 
   getSession().then(async ({ session }) => {
+    const coursesLink = document.querySelector('.nav-link[data-page="courses.html"]');
+
     if (session?.user) {
       const profile = await getUserProfile();
       const isAdmin = isAdminRole(profile?.role);
+      if (coursesLink) {
+        coursesLink.textContent = isAdmin ? 'Manage courses' : 'My courses';
+      }
       navAuth.innerHTML = `
-        <a href="dashboard.html" class="nav-link">Dashboard</a>
-        <a href="courses.html" class="nav-link">${isAdmin ? 'Manage courses' : 'My courses'}</a>
         <button type="button" class="btn btn--ghost btn--sm" id="btn-logout">Sign out</button>
       `;
       document.getElementById('btn-logout')?.addEventListener('click', signOut);
     } else {
+      if (coursesLink) coursesLink.textContent = 'Courses';
       navAuth.innerHTML = `<a href="login.html" class="btn btn--primary btn--sm">Sign in</a>`;
     }
   });
