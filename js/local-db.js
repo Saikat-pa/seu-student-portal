@@ -1,4 +1,5 @@
 import { roleForEmail } from './roles.js';
+import { validateAvatarFile } from './profile-utils.js';
 
 const DB_KEY = 'student_portal_db_v2';
 const SESSION_KEY = 'student_portal_session';
@@ -70,6 +71,13 @@ export function ensureSeeded() {
           passwordHash: await hashPassword('demo12345'),
           full_name: 'Demo Student',
           role: 'student',
+          avatar_url: '',
+          batch: '58',
+          department: 'CSE',
+          session: '2021-2022',
+          gender: 'Male',
+          contact_number: '01700000000',
+          cgpa: 3.65,
           created_at: now,
         }
       );
@@ -151,29 +159,102 @@ export async function localGetProfile(userId) {
   return {
     data: {
       id: user.id,
+      email: user.email,
       full_name: user.full_name,
       role: user.role,
+      avatar_url: user.avatar_url || '',
+      batch: user.batch || '',
+      department: user.department || '',
+      session: user.session || '',
+      gender: user.gender || '',
+      contact_number: user.contact_number || '',
+      cgpa: user.cgpa ?? null,
+      created_at: user.created_at,
     },
     error: null,
   };
 }
 
+function applyProfilePatch(user, patch) {
+  if (patch.full_name != null) user.full_name = String(patch.full_name).trim();
+  if (patch.email != null) user.email = String(patch.email).trim().toLowerCase();
+  if (patch.avatar_url != null) user.avatar_url = patch.avatar_url;
+  if (patch.batch != null) user.batch = String(patch.batch).trim();
+  if (patch.department != null) user.department = String(patch.department).trim();
+  if (patch.session != null) user.session = String(patch.session).trim();
+  if (patch.gender != null) user.gender = String(patch.gender).trim();
+  if (patch.contact_number != null) user.contact_number = String(patch.contact_number).trim();
+  if (patch.cgpa === null || patch.cgpa === '') user.cgpa = null;
+  else if (patch.cgpa != null) user.cgpa = Number(patch.cgpa);
+}
+
 export async function localUpdateProfile(userId, patch) {
   await ensureSeeded();
   const db = loadDb();
+  const { session } = await localGetSession();
+  const actorId = session?.user?.id;
+  const actor = db.users.find((u) => u.id === actorId);
   const user = db.users.find((u) => u.id === userId);
   if (!user) return { data: null, error: { message: 'Profile not found' } };
-  if (patch.full_name != null) user.full_name = String(patch.full_name).trim();
-  saveDb(db);
-  const session = await localGetSession();
-  if (session.session?.user?.id === userId) {
-    session.session.user.user_metadata.full_name = user.full_name;
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session.session));
+
+  const isAdmin = actor?.role === 'admin';
+  const keys = Object.keys(patch);
+  if (!isAdmin) {
+    if (actorId !== userId) return { data: null, error: { message: 'Admin access only.' } };
+    if (keys.some((k) => k !== 'avatar_url')) {
+      return { data: null, error: { message: 'Only administrators can edit profile details.' } };
+    }
   }
-  return {
-    data: { id: user.id, full_name: user.full_name, role: user.role },
-    error: null,
-  };
+
+  applyProfilePatch(user, patch);
+  saveDb(db);
+
+  if (session?.user?.id === userId && patch.full_name != null) {
+    session.user.user_metadata.full_name = user.full_name;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  return localGetProfile(userId);
+}
+
+export async function localUploadAvatar(userId, file) {
+  const msg = validateAvatarFile(file);
+  if (msg) return { data: null, url: null, error: { message: msg } };
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const { data, error } = await localUpdateProfile(userId, { avatar_url: reader.result });
+      resolve({ data, url: reader.result, error });
+    };
+    reader.onerror = () => resolve({ data: null, url: null, error: { message: 'Could not read photo.' } });
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function localListStudents() {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { data: null, error: { message: gate.message } };
+  await ensureSeeded();
+  const db = loadDb();
+  const rows = db.users
+    .filter((u) => u.role === 'student')
+    .map((u) => ({
+      id: u.id,
+      email: u.email,
+      full_name: u.full_name,
+      role: u.role,
+      avatar_url: u.avatar_url || '',
+      batch: u.batch || '',
+      department: u.department || '',
+      session: u.session || '',
+      gender: u.gender || '',
+      contact_number: u.contact_number || '',
+      cgpa: u.cgpa ?? null,
+      created_at: u.created_at,
+    }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  return { data: rows, error: null };
 }
 
 export async function localListAnnouncements() {
@@ -230,6 +311,13 @@ export async function localSignUp({ email, password, fullName, role }) {
     passwordHash: await hashPassword(password),
     full_name: fullName.trim(),
     role: resolvedRole,
+    avatar_url: '',
+    batch: '',
+    department: '',
+    session: '',
+    gender: '',
+    contact_number: '',
+    cgpa: null,
     created_at: new Date().toISOString(),
   };
 

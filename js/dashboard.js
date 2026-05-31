@@ -149,6 +149,8 @@ export async function initDashboardPage() {
       coursesQuick.querySelector('span').textContent =
         'Open the course catalog to add, edit, or remove courses for students.';
     }
+    const studentsQuick = document.getElementById('quick-students');
+    if (studentsQuick) studentsQuick.hidden = false;
     await loadAdminDashboard();
   } else {
     if (recentTitle) recentTitle.textContent = 'My recent courses';

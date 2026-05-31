@@ -27,28 +27,32 @@
   <main class="page">
     <div class="container">
       <header class="page-header">
-        <h1>My profile</h1>
-        <p>View your account details and update your display name.</p>
+        <h1 id="profile-heading">My profile</h1>
+        <p id="profile-sub">View your student information. Upload or change your photo below.</p>
       </header>
-      <section class="card">
-        <dl class="profile-dl">
-          <dt>Email</dt>
-          <dd id="profile-email">—</dd>
-          <dt>Role</dt>
-          <dd><span id="profile-role" class="badge badge--active">Student</span></dd>
-          <dt>User ID</dt>
-          <dd><code id="profile-id" class="profile-id">—</code></dd>
-        </dl>
-        <form id="profile-form" class="profile-form" novalidate>
-          <div class="form-group form-group--full">
-            <label for="profile-name">Full name</label>
-            <input type="text" id="profile-name" name="fullName" maxlength="80" required />
+
+      <section class="card profile-card">
+        <div class="profile-card__top">
+          <div id="profile-avatar-wrap" class="profile-avatar-wrap"></div>
+          <div class="profile-photo-actions">
+            <label class="btn btn--primary btn--sm" for="avatar-input">Upload photo</label>
+            <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+            <button type="button" class="btn btn--ghost btn--sm" id="avatar-remove" hidden>Remove photo</button>
+            <p class="card-hint">JPG, PNG, WebP or GIF · max 2 MB</p>
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn--primary">Save profile</button>
-            <a href="dashboard.html" class="btn btn--ghost">Back to dashboard</a>
-          </div>
-        </form>
+        </div>
+
+        <dl class="profile-grid" id="profile-fields"></dl>
+
+        <p id="profile-admin-note" class="card-hint" hidden>
+          Administrators manage student records on the
+          <a href="students.html">Students</a> page.
+        </p>
+
+        <div class="form-actions">
+          <a href="dashboard.html" class="btn btn--ghost">Back to dashboard</a>
+          <a href="students.html" class="btn btn--primary" id="profile-students-link" hidden>Manage students</a>
+        </div>
       </section>
     </div>
   </main>

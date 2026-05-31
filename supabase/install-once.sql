@@ -12,7 +12,15 @@ drop table if exists public.profiles cascade;
 
 create table public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
+  email text,
   full_name text not null default '',
+  avatar_url text,
+  batch text not null default '',
+  department text not null default '',
+  session text not null default '',
+  gender text not null default '',
+  contact_number text not null default '',
+  cgpa numeric(4, 2) check (cgpa is null or (cgpa >= 0 and cgpa <= 4)),
   role text not null default 'student'
     check (role in ('admin', 'student')),
   created_at timestamptz not null default now()
@@ -85,14 +93,16 @@ begin
     meta_role := 'student';
   end if;
 
-  insert into public.profiles (id, full_name, role)
+  insert into public.profiles (id, email, full_name, role)
   values (
     new.id,
+    new.email,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     meta_role
   )
   on conflict (id) do update set
     full_name = excluded.full_name,
+    email = excluded.email,
     role = excluded.role;
 
   return new;
@@ -116,6 +126,40 @@ create policy "profiles_insert_own"
 
 create policy "profiles_update_own"
   on public.profiles for update using (auth.uid() = id);
+
+create policy "profiles_update_admin"
+  on public.profiles for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+create or replace function public.guard_profile_update()
+returns trigger
+language plpgsql
+as $$
+begin
+  if public.is_admin() then
+    return new;
+  end if;
+  if auth.uid() = old.id then
+    if new.full_name is distinct from old.full_name
+       or new.email is distinct from old.email
+       or new.batch is distinct from old.batch
+       or new.department is distinct from old.department
+       or new.session is distinct from old.session
+       or new.gender is distinct from old.gender
+       or new.contact_number is distinct from old.contact_number
+       or new.cgpa is distinct from old.cgpa
+       or new.role is distinct from old.role then
+      raise exception 'Only administrators can edit profile details';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_guard_update on public.profiles;
+create trigger profiles_guard_update
+  before update on public.profiles
+  for each row execute function public.guard_profile_update();
 
 -- course catalog
 create policy "catalog_select_auth"
@@ -242,3 +286,24 @@ create policy "announcements_update_admin"
 create policy "announcements_delete_admin"
   on public.announcements for delete to authenticated
   using (public.is_admin());
+
+-- Avatar storage
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do update set public = true;
+
+create policy "avatars_public_read"
+  on storage.objects for select to public
+  using (bucket_id = 'avatars');
+
+create policy "avatars_upload_own"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "avatars_update_own"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "avatars_delete_own"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);

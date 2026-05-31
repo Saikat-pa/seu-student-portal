@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from './config.js';
-import { getSession, initNavAuth, useLocalMode } from './auth.js';
+import { getSession, initNavAuth, useLocalMode, getUserProfile } from './auth.js';
+import { isAdminRole } from './roles.js';
 import { updateSetupBanner } from './supabase-health.js';
 import { initThemeToggle } from './theme.js';
 import { applyBranding } from './branding.js';
@@ -41,15 +42,22 @@ export function initLayout() {
 }
 
 function injectPortalNavLinks() {
-  getSession().then(({ session }) => {
+  getSession().then(async ({ session }) => {
     const nav = document.getElementById('main-nav');
     const authSlot = document.getElementById('nav-auth');
     if (!nav || !session || nav.querySelector('[data-page="profile.html"]')) return;
 
-    for (const [href, label, page] of [
+    let isAdmin = false;
+    const profile = await getUserProfile();
+    isAdmin = isAdminRole(profile?.role);
+
+    const links = [
       ['notices.html', 'Notices', 'notices.html'],
       ['profile.html', 'Profile', 'profile.html'],
-    ]) {
+    ];
+    if (isAdmin) links.unshift(['students.html', 'Students', 'students.html']);
+
+    for (const [href, label, page] of links) {
       const link = document.createElement('a');
       link.href = href;
       link.className = 'nav-link';

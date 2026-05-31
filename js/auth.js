@@ -10,6 +10,7 @@ import {
 import { showToast, validateEmail, validatePassword, setFieldError, clearFieldError } from './utils.js';
 import { normalizeAuthError } from './errors.js';
 import { isAdminRole } from './roles.js';
+import { mapProfileRow } from './profile-utils.js';
 
 export { getSupabase } from './api.js';
 export { getSession, useLocalMode };
@@ -212,27 +213,28 @@ export async function getUserProfile() {
   const meta = session.user.user_metadata || {};
 
   if (profile) {
-    return {
-      id: session.user.id,
-      email: session.user.email,
-      fullName: profile.full_name || meta.full_name || 'User',
-      role: profile.role || meta.role || 'student',
-    };
+    return mapProfileRow(profile, session.user.email);
   }
 
   if (!error) {
-    return {
-      id: session.user.id,
-      email: session.user.email,
-      fullName: meta.full_name || session.user.email?.split('@')[0] || 'User',
-      role: meta.role || 'student',
-    };
+    return mapProfileRow(
+      {
+        id: session.user.id,
+        full_name: meta.full_name || session.user.email?.split('@')[0] || 'User',
+        role: meta.role || 'student',
+        email: session.user.email,
+      },
+      session.user.email
+    );
   }
 
-  return {
-    id: session.user.id,
-    email: session.user.email,
-    fullName: meta.full_name || 'User',
-    role: meta.role || 'student',
-  };
+  return mapProfileRow(
+    {
+      id: session.user.id,
+      full_name: meta.full_name || 'User',
+      role: meta.role || 'student',
+      email: session.user.email,
+    },
+    session.user.email
+  );
 }

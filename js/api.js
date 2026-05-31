@@ -4,6 +4,7 @@ import * as local from './local-db.js';
 import { wrapAuthCall } from './errors.js';
 import { roleForEmail } from './roles.js';
 import { appUrl } from './app-url.js';
+import { profileToDb, validateAvatarFile } from './profile-utils.js';
 
 let supabase = null;
 
@@ -114,8 +115,12 @@ export async function ensureProfileForUser(user) {
   if (error) return;
 
   if (!existing) {
-    await client.from('profiles').insert({ id: user.id, full_name, role });
+    await client.from('profiles').insert({ id: user.id, full_name, role, email: user.email || '' });
     return;
+  }
+
+  if (user.email && existing.email !== user.email) {
+    await client.from('profiles').update({ email: user.email }).eq('id', user.id);
   }
 
   if (role === 'admin' && existing.role !== 'admin') {
@@ -236,17 +241,55 @@ export async function updateEnrollmentStatus(userId, enrollmentId, status) {
 }
 
 export async function updateProfile(userId, patch) {
+  const dbPatch = profileToDb(patch);
   if (useLocalMode()) {
-    return local.localUpdateProfile(userId, patch);
+    return local.localUpdateProfile(userId, dbPatch);
   }
   const client = getSupabase();
   const { data, error } = await client
     .from('profiles')
-    .update(patch)
+    .update(dbPatch)
     .eq('id', userId)
     .select()
     .single();
   return { data, error };
+}
+
+export async function fetchStudentProfiles() {
+  if (useLocalMode()) {
+    return local.localListStudents();
+  }
+  const client = getSupabase();
+  const { data, error } = await client
+    .from('profiles')
+    .select('*')
+    .eq('role', 'student')
+    .order('full_name', { ascending: true });
+  return { data, error };
+}
+
+export async function uploadAvatar(userId, file) {
+  const msg = validateAvatarFile(file);
+  if (msg) return { data: null, url: null, error: { message: msg } };
+
+  if (useLocalMode()) {
+    return local.localUploadAvatar(userId, file);
+  }
+
+  const client = getSupabase();
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${userId}/avatar.${ext}`;
+  const { error: uploadError } = await client.storage.from('avatars').upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+    cacheControl: '3600',
+  });
+  if (uploadError) return { data: null, url: null, error: uploadError };
+
+  const { data: urlData } = client.storage.from('avatars').getPublicUrl(path);
+  const avatar_url = `${urlData.publicUrl}?v=${Date.now()}`;
+  const { data, error } = await updateProfile(userId, { avatar_url });
+  return { data, url: avatar_url, error };
 }
 
 export async function fetchAnnouncements() {

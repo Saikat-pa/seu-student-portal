@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Students — SEU Student Portal</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="layout">
+  <div id="config-banner" class="config-banner" hidden aria-live="polite"></div>
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo" aria-label="Southeast University Student Portal home"></a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <nav class="nav nav--collapsible" id="main-nav" aria-label="Main">
+        <a href="index.html" class="nav-link" data-page="index.html">Home</a>
+        <a href="about.html" class="nav-link" data-page="about.html">About</a>
+        <a href="dashboard.html" class="nav-link" data-page="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="nav-link" data-page="courses.html">Courses</a>
+        <a href="students.html" class="nav-link" data-page="students.html">Students</a>
+        <a href="notices.html" class="nav-link" data-page="notices.html">Notices</a>
+        <a href="profile.html" class="nav-link" data-page="profile.html">Profile</a>
+        <span id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+  <main class="page">
+    <div class="container">
+      <header class="page-header">
+        <h1>Student directory</h1>
+        <p>View and edit all registered students — name, batch, department, session, contact, CGPA, and photo.</p>
+      </header>
+
+      <section class="card">
+        <div class="filter-bar filter-bar--compact" id="student-list-filters" data-filter-root>
+          <div class="filter-bar__row">
+            <div class="form-group filter-bar__search">
+              <label for="student-search">Search</label>
+              <input type="search" id="student-search" data-filter-field="search" placeholder="Name, email, batch, department…" />
+            </div>
+            <div class="form-group">
+              <label for="student-dept">Department</label>
+              <select id="student-dept" data-filter-field="department"></select>
+            </div>
+            <div class="form-group">
+              <label for="student-batch">Batch</label>
+              <select id="student-batch" data-filter-field="batch"></select>
+            </div>
+            <button type="button" class="btn btn--ghost btn--sm" data-filter-reset>Reset</button>
+            <span class="filter-bar__count" data-filter-count></span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>Batch</th>
+                <th>Department</th>
+                <th>Session</th>
+                <th>Gender</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>CGPA</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody"></tbody>
+          </table>
+        </div>
+        <p class="empty-state" id="students-empty" hidden>No students registered yet.</p>
+        <p class="empty-state" id="students-filter-empty" hidden>No students match your filters.</p>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="student-edit-dialog" class="modal">
+    <form id="student-edit-form" method="dialog" class="modal__inner">
+      <h2 class="card__title">Edit student</h2>
+      <input type="hidden" id="edit-student-id" />
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="edit-name">Name</label>
+          <input type="text" id="edit-name" name="full_name" maxlength="80" required />
+        </div>
+        <div class="form-group">
+          <label for="edit-batch">Batch</label>
+          <input type="text" id="edit-batch" name="batch" maxlength="20" placeholder="58" />
+        </div>
+        <div class="form-group">
+          <label for="edit-department">Department</label>
+          <input type="text" id="edit-department" name="department" maxlength="80" placeholder="CSE" />
+        </div>
+        <div class="form-group">
+          <label for="edit-session">Session</label>
+          <input type="text" id="edit-session" name="session" maxlength="20" placeholder="2021-2022" />
+        </div>
+        <div class="form-group">
+          <label for="edit-gender">Gender</label>
+          <select id="edit-gender" name="gender">
+            <option value="">—</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="edit-contact">Contact number</label>
+          <input type="tel" id="edit-contact" name="contact_number" maxlength="20" />
+        </div>
+        <div class="form-group">
+          <label for="edit-email">Email</label>
+          <input type="email" id="edit-email" name="email" maxlength="120" />
+        </div>
+        <div class="form-group">
+          <label for="edit-cgpa">CGPA</label>
+          <input type="number" id="edit-cgpa" name="cgpa" min="0" max="4" step="0.01" placeholder="3.50" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" id="edit-cancel">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save student</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="site-footer"><div class="container"><p data-footer-brand></p></div></footer>
+  <script type="module">
+    import { initLayout } from './js/main.js';
+    import { initStudentsPage } from './js/students.js';
+    initLayout();
+    initStudentsPage();
+  </script>
+</body>
+</html>
