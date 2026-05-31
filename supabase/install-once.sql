@@ -21,12 +21,14 @@ create table public.profiles (
 create table public.course_catalog (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  code text not null unique,
+  code text not null,
+  section text not null default 'A',
   credits integer not null check (credits >= 1 and credits <= 12),
   instructor text not null default '',
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (code, section)
 );
 
 create table public.enrollments (

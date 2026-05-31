@@ -5,6 +5,7 @@ import {
   signOut as apiSignOut,
   useLocalMode,
   fetchProfile,
+  ensureProfileForUser,
 } from './api.js';
 import { showToast, validateEmail, validatePassword, setFieldError, clearFieldError } from './utils.js';
 import { normalizeAuthError } from './errors.js';
@@ -204,6 +205,8 @@ export function initAuthTabs() {
 export async function getUserProfile() {
   const { session } = await getSession();
   if (!session?.user) return null;
+
+  await ensureProfileForUser(session.user);
 
   const { data: profile, error } = await fetchProfile(session.user.id);
   const meta = session.user.user_metadata || {};

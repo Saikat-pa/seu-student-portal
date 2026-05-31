@@ -77,6 +77,7 @@ export function ensureSeeded() {
           id: c1,
           title: 'Introduction to Computer Science',
           code: 'CS101',
+          section: 'A',
           credits: 3,
           instructor: 'Dr. Rahman',
           is_active: true,
@@ -87,6 +88,7 @@ export function ensureSeeded() {
           id: c2,
           title: 'Calculus I',
           code: 'MATH101',
+          section: '1',
           credits: 4,
           instructor: 'Prof. Khan',
           is_active: true,
@@ -197,16 +199,39 @@ export async function localListCatalog() {
   await ensureSeeded();
   const db = loadDb();
   return {
-    data: [...db.catalog].sort((a, b) => a.code.localeCompare(b.code)),
+    data: [...db.catalog].sort(
+      (a, b) =>
+        a.code.localeCompare(b.code) || (a.section || '').localeCompare(b.section || '')
+    ),
     error: null,
   };
 }
 
+async function requireAdminUser() {
+  const { session } = await localGetSession();
+  const userId = session?.user?.id;
+  if (!userId) return { ok: false, message: 'Sign in required.' };
+  const db = loadDb();
+  const user = db.users.find((u) => u.id === userId);
+  if (!user || user.role !== 'admin') {
+    return { ok: false, message: 'Only admins can manage the course catalog.' };
+  }
+  return { ok: true };
+}
+
 export async function localInsertCatalog(course) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { error: { message: gate.message } };
   const db = loadDb();
   const now = new Date().toISOString();
-  if (db.catalog.some((c) => c.code.toUpperCase() === course.code.toUpperCase())) {
-    return { error: { message: 'Course code already exists.' } };
+  const codeKey = course.code.toUpperCase();
+  const sectionKey = (course.section || 'A').toUpperCase();
+  if (
+    db.catalog.some(
+      (c) => c.code.toUpperCase() === codeKey && (c.section || 'A').toUpperCase() === sectionKey
+    )
+  ) {
+    return { error: { message: 'This course code and section already exists.' } };
   }
   const row = { id: uuid(), ...course, created_at: now, updated_at: now };
   db.catalog.push(row);
@@ -215,12 +240,23 @@ export async function localInsertCatalog(course) {
 }
 
 export async function localUpdateCatalog(id, course) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { error: { message: gate.message } };
   const db = loadDb();
   const idx = db.catalog.findIndex((c) => c.id === id);
   if (idx === -1) return { error: { message: 'Course not found.' } };
-  const code = course.code?.toUpperCase();
-  if (code && db.catalog.some((c) => c.id !== id && c.code.toUpperCase() === code)) {
-    return { error: { message: 'Course code already exists.' } };
+  const codeKey = course.code?.toUpperCase();
+  const sectionKey = (course.section || 'A').toUpperCase();
+  if (
+    codeKey &&
+    db.catalog.some(
+      (c) =>
+        c.id !== id &&
+        c.code.toUpperCase() === codeKey &&
+        (c.section || 'A').toUpperCase() === sectionKey
+    )
+  ) {
+    return { error: { message: 'This course code and section already exists.' } };
   }
   db.catalog[idx] = { ...db.catalog[idx], ...course, updated_at: new Date().toISOString() };
   saveDb(db);
@@ -228,6 +264,8 @@ export async function localUpdateCatalog(id, course) {
 }
 
 export async function localDeleteCatalog(id) {
+  const gate = await requireAdminUser();
+  if (!gate.ok) return { error: { message: gate.message } };
   const db = loadDb();
   const before = db.catalog.length;
   db.catalog = db.catalog.filter((c) => c.id !== id);

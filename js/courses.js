@@ -17,6 +17,7 @@ import {
   clearFieldError,
   escapeHtml,
   formatDate,
+  formatCourseLabel,
 } from './utils.js';
 
 let editingCatalogId = null;
@@ -27,13 +28,24 @@ let isAdmin = false;
 
 function mapError(error) {
   if (!error) return null;
-  return typeof error === 'string' ? error : error.message;
+  const msg = typeof error === 'string' ? error : error.message || '';
+  if (/row-level security|permission denied|violates.*policy/i.test(msg)) {
+    if (isAdmin) {
+      return 'Admin permission denied. In Supabase SQL, set profiles.role = admin for your user.';
+    }
+    return 'Could not save. Sign in as a student, or ask an admin to add courses first.';
+  }
+  if (/duplicate key|unique constraint/i.test(msg)) {
+    return 'This course code and section already exists.';
+  }
+  return msg;
 }
 
 function getCatalogFields(form) {
   return {
     title: form.title,
     code: form.code,
+    section: form.section,
     credits: form.credits,
     instructor: form.instructor,
     is_active: form.is_active,
@@ -79,6 +91,7 @@ function renderAdminTable() {
       (c) => `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
+      <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title)}</td>
       <td>${c.credits}</td>
       <td>${escapeHtml(c.instructor)}</td>
@@ -104,6 +117,7 @@ function renderAdminTable() {
 function resetCatalogForm(form) {
   form.reset();
   if (form.is_active) form.is_active.checked = true;
+  if (form.section) form.section.value = 'A';
   editingCatalogId = null;
   document.getElementById('form-heading').textContent = 'Add course to catalog';
   form.querySelector('[type="submit"]').textContent = 'Add course';
@@ -118,6 +132,7 @@ function startEditCatalog(id) {
   editingCatalogId = id;
   form.title.value = course.title;
   form.code.value = course.code;
+  form.section.value = course.section || 'A';
   form.credits.value = course.credits;
   form.instructor.value = course.instructor;
   form.is_active.checked = !!course.is_active;
@@ -129,7 +144,7 @@ function startEditCatalog(id) {
 async function confirmDeleteCatalog(id) {
   const course = catalogCache.find((c) => c.id === id);
   if (!course) return;
-  if (!window.confirm(`Delete "${course.code}" from catalog? Enrollments will also be removed.`)) return;
+  if (!window.confirm(`Delete ${formatCourseLabel(course)} from catalog? Enrollments will also be removed.`)) return;
 
   const { error } = await deleteCatalog(id);
   if (error) {
@@ -152,6 +167,7 @@ function bindAdminForm() {
     const raw = {
       title: form.title.value,
       code: form.code.value,
+      section: form.section.value,
       credits: form.credits.value,
       instructor: form.instructor.value,
       is_active: form.is_active.checked,
@@ -230,13 +246,14 @@ function renderAvailableCourses() {
       return `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
+      <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title)}</td>
       <td>${c.credits}</td>
       <td>${escapeHtml(c.instructor)}</td>
       <td>
         ${
           taken
-            ? '<span class="badge badge--completed">Enrolled</span>'
+            ? '<span class="badge badge--completed">Selected</span>'
             : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
         }
       </td>
@@ -268,10 +285,11 @@ function renderMyEnrollments() {
       return `
     <tr>
       <td><strong>${escapeHtml(c.code || '—')}</strong></td>
+      <td><span class="badge badge--active">${escapeHtml(c.section || '—')}</span></td>
       <td>${escapeHtml(c.title || '—')}</td>
       <td>${c.credits ?? '—'}</td>
       <td>
-        <select class="enrollment-status" data-id="${e.id}" aria-label="Status for ${escapeHtml(c.code || 'course')}">
+        <select class="enrollment-status" data-id="${e.id}" aria-label="Status for ${escapeHtml(formatCourseLabel(c))}">
           <option value="enrolled" ${e.status === 'enrolled' ? 'selected' : ''}>Enrolled</option>
           <option value="completed" ${e.status === 'completed' ? 'selected' : ''}>Completed</option>
           <option value="dropped" ${e.status === 'dropped' ? 'selected' : ''}>Dropped</option>
@@ -307,7 +325,7 @@ async function handleEnroll(courseId) {
 async function handleDrop(enrollmentId) {
   const row = enrollmentsCache.find((e) => e.id === enrollmentId);
   const c = row?.course_catalog;
-  if (!window.confirm(`Drop ${c?.code || 'this course'}?`)) return;
+  if (!window.confirm(`Drop ${formatCourseLabel(c) || 'this course'}?`)) return;
 
   const { error } = await dropEnrollment(currentUserId, enrollmentId);
   if (error) {
@@ -351,13 +369,13 @@ export async function initCoursesPage() {
   document.getElementById('student-panel').hidden = isAdmin;
 
   if (isAdmin) {
-    if (pageTitle) pageTitle.textContent = 'Manage course catalog';
-    if (pageDesc) pageDesc.textContent = 'Add and edit courses students can select.';
+    if (pageTitle) pageTitle.textContent = 'Course catalog (Admin)';
+    if (pageDesc) pageDesc.textContent = 'Add courses below — students will see them in Available courses.';
     bindAdminForm();
     await loadAdminCatalog();
   } else {
     if (pageTitle) pageTitle.textContent = 'My courses';
-    if (pageDesc) pageDesc.textContent = 'Select courses from the catalog — you cannot create new courses.';
+    if (pageDesc) pageDesc.textContent = 'Select courses from the catalog, then manage them under My selected courses.';
     await loadStudentViews();
   }
 }

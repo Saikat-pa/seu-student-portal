@@ -1,7 +1,7 @@
 import { requireAuth, getUserProfile } from './auth.js';
 import { isAdminRole } from './roles.js';
 import { fetchCatalog, fetchEnrollments } from './api.js';
-import { escapeHtml } from './utils.js';
+import { escapeHtml, formatCourseLabel } from './utils.js';
 
 async function loadStudentDashboard(userId) {
   const { data, error } = await fetchEnrollments(userId);
@@ -41,7 +41,7 @@ async function loadStudentDashboard(userId) {
     return `
     <li class="recent-item">
       <div>
-        <span class="recent-item__code">${escapeHtml(c.code || '—')}</span>
+        <span class="recent-item__code">${escapeHtml(formatCourseLabel(c))}</span>
         <span class="recent-item__title">${escapeHtml(c.title || '')}</span>
       </div>
       <span class="badge badge--${e.status === 'enrolled' ? 'active' : e.status}">${escapeHtml(e.status)}</span>
@@ -84,7 +84,7 @@ async function loadAdminDashboard() {
   list.innerHTML = catalog.slice(0, 5).map((c) => `
     <li class="recent-item">
       <div>
-        <span class="recent-item__code">${escapeHtml(c.code)}</span>
+        <span class="recent-item__code">${escapeHtml(formatCourseLabel(c))}</span>
         <span class="recent-item__title">${escapeHtml(c.title)}</span>
       </div>
       <span class="badge badge--${c.is_active ? 'active' : 'dropped'}">${c.is_active ? 'Open' : 'Closed'}</span>
@@ -111,11 +111,24 @@ export async function initDashboardPage() {
   }
 
   const recentTitle = document.getElementById('recent-title');
-  if (isAdminRole(profile?.role)) {
+  const coursesQuick = document.getElementById('quick-courses');
+  const isAdmin = isAdminRole(profile?.role);
+
+  if (isAdmin) {
     if (recentTitle) recentTitle.textContent = 'Catalog preview';
+    if (coursesQuick) {
+      coursesQuick.querySelector('strong').textContent = 'Add courses';
+      coursesQuick.querySelector('span').textContent =
+        'Open the course catalog to add, edit, or remove courses for students.';
+    }
     await loadAdminDashboard();
   } else {
     if (recentTitle) recentTitle.textContent = 'My recent courses';
+    if (coursesQuick) {
+      coursesQuick.querySelector('strong').textContent = 'Select courses';
+      coursesQuick.querySelector('span').textContent =
+        'Browse available courses and enroll with one click.';
+    }
     await loadStudentDashboard(session.user.id);
   }
 }

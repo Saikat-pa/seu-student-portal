@@ -97,6 +97,32 @@ export async function fetchProfile(userId) {
   return { data, error };
 }
 
+/** Create or fix profile row so admin/student roles work with RLS. */
+export async function ensureProfileForUser(user) {
+  if (useLocalMode() || !user?.id) return;
+  const client = getSupabase();
+  const role = roleForEmail(user.email || '');
+  const full_name =
+    user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+
+  const { data: existing, error } = await client
+    .from('profiles')
+    .select('id, role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) return;
+
+  if (!existing) {
+    await client.from('profiles').insert({ id: user.id, full_name, role });
+    return;
+  }
+
+  if (role === 'admin' && existing.role !== 'admin') {
+    await client.from('profiles').update({ role: 'admin' }).eq('id', user.id);
+  }
+}
+
 export async function fetchCatalog() {
   if (useLocalMode()) {
     return local.localListCatalog();
@@ -105,7 +131,8 @@ export async function fetchCatalog() {
   const { data, error } = await client
     .from('course_catalog')
     .select('*')
-    .order('code', { ascending: true });
+    .order('code', { ascending: true })
+    .order('section', { ascending: true });
   return { data, error };
 }
 

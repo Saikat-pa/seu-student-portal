@@ -35,10 +35,11 @@
         </p>
       </header>
 
-      <!-- Admin: catalog CRUD -->
+      <!-- Admin: add / edit catalog -->
       <div id="admin-panel" hidden>
         <section class="card">
-          <h2 class="card__title" id="form-heading">Add course to catalog</h2>
+          <h2 class="card__title" id="form-heading">Add course</h2>
+          <p class="card-hint">Section: <strong>A</strong>, <strong>B</strong>, <strong>1</strong>, <strong>10</strong> ইত্যাদি। একই কোডের জন্য আলাদা section = আলাদা row। Student শুধু Select করবে।</p>
           <form id="admin-course-form" novalidate>
             <div class="form-grid">
               <div class="form-group">
@@ -48,6 +49,10 @@
               <div class="form-group">
                 <label for="course-code">Course code</label>
                 <input type="text" id="course-code" name="code" maxlength="10" placeholder="CS101" required />
+              </div>
+              <div class="form-group">
+                <label for="course-section">Section</label>
+                <input type="text" id="course-section" name="section" maxlength="10" placeholder="A, B, 1, 10" required />
               </div>
               <div class="form-group">
                 <label for="course-credits">Credits</label>
@@ -78,6 +83,7 @@
               <thead>
                 <tr>
                   <th>Code</th>
+                  <th>Section</th>
                   <th>Title</th>
                   <th>Credits</th>
                   <th>Instructor</th>
@@ -93,20 +99,21 @@
         </section>
       </div>
 
-      <!-- Student: select only -->
+      <!-- Student: select courses -->
       <div id="student-panel" hidden>
         <section class="card">
           <h2 class="card__title">Available courses</h2>
-          <p class="card-hint">Choose courses offered by the school. You cannot add new courses yourself.</p>
+          <p class="card-hint">যে section admin দিয়েছে সেটাই দেখাবে — <strong>Select</strong> চাপলেই enroll হবে।</p>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Code</th>
+                  <th>Section</th>
                   <th>Title</th>
                   <th>Credits</th>
                   <th>Instructor</th>
-                  <th></th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="available-courses-tbody"></tbody>
@@ -122,10 +129,11 @@
               <thead>
                 <tr>
                   <th>Code</th>
+                  <th>Section</th>
                   <th>Title</th>
                   <th>Credits</th>
                   <th>Status</th>
-                  <th></th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="enrollments-tbody"></tbody>

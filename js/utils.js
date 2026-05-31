@@ -1,6 +1,8 @@
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PASSWORD_MIN = 8;
 export const COURSE_CODE_REGEX = /^[A-Za-z]{2,4}\d{3,4}$/;
+/** Section: 1–10 chars, letters or numbers (e.g. A, B, 1, 10) */
+export const SECTION_REGEX = /^[A-Za-z0-9]{1,10}$/;
 
 export function showToast(message, type = 'info') {
   let container = document.getElementById('toast-container');
@@ -69,6 +71,7 @@ export function validateCatalogForm(data) {
   const errors = {};
   const title = data.title?.trim();
   const code = data.code?.trim().toUpperCase();
+  const section = data.section?.trim().toUpperCase();
   const credits = Number(data.credits);
   const instructor = data.instructor?.trim();
   const isActive = data.is_active === true || data.is_active === 'true' || data.is_active === 'on';
@@ -85,6 +88,12 @@ export function validateCatalogForm(data) {
     errors.code = 'Use format like CS101 or MATH1201.';
   }
 
+  if (!section) {
+    errors.section = 'Section is required (e.g. A, B, 1, 10).';
+  } else if (!SECTION_REGEX.test(section)) {
+    errors.section = 'Section: use letters or numbers only (1–10 characters).';
+  }
+
   if (!Number.isInteger(credits) || credits < 1 || credits > 12) {
     errors.credits = 'Credits must be a whole number from 1 to 12.';
   }
@@ -97,7 +106,7 @@ export function validateCatalogForm(data) {
 
   return {
     errors,
-    values: { title, code, credits, instructor, is_active: isActive },
+    values: { title, code, section, credits, instructor, is_active: isActive },
   };
 }
 
@@ -105,6 +114,12 @@ export function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str ?? '';
   return div.innerHTML;
+}
+
+export function formatCourseLabel(course) {
+  if (!course?.code) return '—';
+  const sec = course.section ? ` · Sec ${course.section}` : '';
+  return `${course.code}${sec}`;
 }
 
 export function formatDate(iso) {
