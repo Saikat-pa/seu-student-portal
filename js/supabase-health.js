@@ -28,10 +28,7 @@ export async function updateSetupBanner() {
 
   const status = await checkSupabaseReady();
   if (status.ok) {
-    banner.hidden = false;
-    banner.className = 'config-banner config-banner--ok';
-    banner.innerHTML =
-      '✓ <strong>Live Supabase</strong> — <a href="login.html">Register</a> with your real email, then sign in to use courses and dashboard.';
+    banner.hidden = true;
     return;
   }
 

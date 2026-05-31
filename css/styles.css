@@ -568,18 +568,6 @@ img {
   justify-content: center;
 }
 
-.hero__live-url {
-  margin-top: 1.25rem;
-  font-size: 0.95rem;
-  color: var(--color-muted);
-  text-align: center;
-}
-
-.hero__live-url a {
-  color: var(--color-accent);
-  font-weight: 600;
-}
-
 /* Features */
 .features {
   padding: 3rem 0 5rem;
