@@ -359,6 +359,16 @@ function countSeatsUsed(db, courseId) {
   ).length;
 }
 
+function userHasActiveCode(db, userId, code, exceptEnrollmentId = null) {
+  const codeKey = code.toUpperCase();
+  return db.enrollments.some((e) => {
+    if (e.user_id !== userId || !['enrolled', 'completed'].includes(e.status)) return false;
+    if (exceptEnrollmentId && e.id === exceptEnrollmentId) return false;
+    const c = db.catalog.find((cat) => cat.id === e.course_id);
+    return c && c.code.toUpperCase() === codeKey;
+  });
+}
+
 export async function localSeatRemainingMap() {
   await ensureSeeded();
   const db = loadDb();
@@ -476,6 +486,9 @@ export async function localEnroll(userId, courseId) {
   if (db.enrollments.some((e) => e.user_id === userId && e.course_id === courseId)) {
     return { error: { message: 'You are already enrolled in this course.' } };
   }
+  if (userHasActiveCode(db, userId, course.code)) {
+    return { error: { message: 'You already selected this course code in another section.' } };
+  }
   const cap = course.seat_capacity ?? 30;
   if (countSeatsUsed(db, courseId) >= cap) {
     return { error: { message: 'No seats available.' } };
@@ -505,7 +518,14 @@ export async function localUpdateEnrollment(userId, enrollmentId, patch) {
   const db = loadDb();
   const idx = db.enrollments.findIndex((e) => e.id === enrollmentId && e.user_id === userId);
   if (idx === -1) return { error: { message: 'Enrollment not found.' } };
-  db.enrollments[idx] = { ...db.enrollments[idx], ...patch };
+  const next = { ...db.enrollments[idx], ...patch };
+  if (['enrolled', 'completed'].includes(next.status)) {
+    const course = db.catalog.find((c) => c.id === next.course_id);
+    if (course && userHasActiveCode(db, userId, course.code, enrollmentId)) {
+      return { error: { message: 'You already selected this course code in another section.' } };
+    }
+  }
+  db.enrollments[idx] = next;
   saveDb(db);
   return { data: attachCourse(db, db.enrollments[idx]), error: null };
 }

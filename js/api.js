@@ -202,12 +202,40 @@ export async function enrollInCourse(userId, courseId) {
   if (useLocalMode()) {
     return local.localEnroll(userId, courseId);
   }
+  const client = getSupabase();
+  const { data: targetCourse, error: courseErr } = await client
+    .from('course_catalog')
+    .select('id, code, is_active')
+    .eq('id', courseId)
+    .single();
+  if (courseErr || !targetCourse?.is_active) {
+    return { data: null, error: { message: 'Course is not available.' } };
+  }
+  const { data: existing, error: existErr } = await client
+    .from('enrollments')
+    .select('id, course_id, status, course_catalog(code)')
+    .eq('user_id', userId)
+    .in('status', ['enrolled', 'completed']);
+  if (existErr) return { data: null, error: existErr };
+  const codeKey = targetCourse.code.toUpperCase();
+  if ((existing || []).some((e) => e.course_id === courseId)) {
+    return { data: null, error: { message: 'You are already enrolled in this course.' } };
+  }
+  if (
+    (existing || []).some(
+      (e) => e.course_catalog?.code?.toUpperCase() === codeKey && e.course_id !== courseId
+    )
+  ) {
+    return {
+      data: null,
+      error: { message: 'You already selected this course code in another section.' },
+    };
+  }
   const { data: seatMap } = await fetchSeatRemainingMap();
   const seats = seatMap?.[courseId];
   if (seats && seats.remaining <= 0) {
     return { data: null, error: { message: 'No seats available.' } };
   }
-  const client = getSupabase();
   const { data, error } = await client
     .from('enrollments')
     .insert({ user_id: userId, course_id: courseId, status: 'enrolled' })

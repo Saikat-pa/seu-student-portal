@@ -110,6 +110,9 @@ function mapError(error) {
   if (/no seats available/i.test(msg)) {
     return 'No seats left for this course.';
   }
+  if (/already selected this course code/i.test(msg)) {
+    return 'You already selected this course code in another section. Drop that course first.';
+  }
   return msg;
 }
 
@@ -339,6 +342,17 @@ function enrolledCourseIds() {
   return new Set(enrollmentsCache.map((e) => e.course_id));
 }
 
+function enrolledCourseCodes() {
+  const codes = new Set();
+  enrollmentsCache
+    .filter((e) => ['enrolled', 'completed'].includes(e.status))
+    .forEach((e) => {
+      const code = e.course_catalog?.code;
+      if (code) codes.add(code.toUpperCase());
+    });
+  return codes;
+}
+
 function renderAvailableCourses() {
   const tbody = document.getElementById('available-courses-tbody');
   const empty = document.getElementById('available-empty');
@@ -367,12 +381,14 @@ function renderAvailableCourses() {
   if (filterEmpty) filterEmpty.hidden = true;
 
   const enrolled = enrolledCourseIds();
+  const enrolledCodes = enrolledCourseCodes();
 
   tbody.innerHTML = available
     .map((c) => {
       const taken = enrolled.has(c.id);
+      const codeTaken = !taken && enrolledCodes.has((c.code || '').toUpperCase());
       const left = seatMap[c.id]?.remaining ?? c.seat_capacity ?? 0;
-      const full = !taken && left <= 0;
+      const full = !taken && !codeTaken && left <= 0;
       return `
     <tr>
       <td><strong>${escapeHtml(c.code)}</strong></td>
@@ -385,9 +401,11 @@ function renderAvailableCourses() {
         ${
           taken
             ? '<span class="badge badge--completed">Selected</span>'
-            : full
-              ? '<span class="badge badge--dropped">Full</span>'
-              : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
+            : codeTaken
+              ? '<span class="badge badge--dropped" title="Same course code already selected in another section">Code taken</span>'
+              : full
+                ? '<span class="badge badge--dropped">Full</span>'
+                : `<button type="button" class="btn btn--primary btn--sm btn-enroll" data-id="${c.id}">Select</button>`
         }
       </td>
     </tr>
